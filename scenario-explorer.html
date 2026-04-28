@@ -10,32 +10,25 @@
     --border: rgba(0,0,0,0.1); --blue: #378ADD; --orange: #D85A30;
     --green: #1D9E75; --gray: #B4B2A9; --pass: #639922; --fail: #E24B4A;
     --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --mono: 'SF Mono', 'Fira Code', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--sans); background: var(--bg); color: var(--text); max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem; line-height: 1.6; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; line-height: 1.6; }
   h1 { font-size: 22px; font-weight: 500; margin-bottom: 0.25rem; }
-  h2 { font-size: 16px; font-weight: 500; margin-bottom: 0.5rem; color: var(--text); }
+  h2 { font-size: 15px; font-weight: 500; margin-bottom: 0.5rem; color: var(--text); }
   .subtitle { font-size: 14px; color: var(--text2); margin-bottom: 1.5rem; }
   .ctrl-row { display: flex; align-items: center; gap: 12px; margin: 0 0 0.75rem; }
   .ctrl-label { font-size: 13px; color: var(--text2); min-width: 170px; }
   .ctrl-row input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; appearance: none; background: var(--border); border-radius: 2px; outline: none; }
   .ctrl-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--blue); cursor: pointer; border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--border); }
   .ctrl-val { font-size: 13px; font-weight: 500; min-width: 56px; text-align: right; }
-  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 1rem 0; }
-  .metric { background: var(--bg2); border-radius: 8px; padding: 0.6rem 0.8rem; }
-  .metric-label { font-size: 11px; color: var(--text2); margin-bottom: 2px; }
-  .metric-val { font-size: 18px; font-weight: 500; }
   .legend-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 0.5rem 0 8px; font-size: 12px; color: var(--text2); }
   .legend-item { display: flex; align-items: center; gap: 4px; }
   .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
   .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
-  .principle-tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; margin: 0 4px 0 0; font-weight: 500; }
-  .p1 { background: #E6F1FB; color: #0C447C; }
-  .p2 { background: #E1F5EE; color: #085041; }
-  .p3 { background: #EEEDFE; color: #3C3489; }
   .note { font-size: 13px; color: var(--text2); margin: 0 0 0.5rem; }
-  .chart-wrap { position: relative; width: 100%; height: 300px; margin-bottom: 1rem; }
+  .chart-wrap { position: relative; width: 100%; height: 300px; margin-bottom: 0.5rem; }
+  .charts-row { display: grid; grid-template-columns: 1fr 1.6fr; gap: 24px; align-items: start; }
+  .charts-row .chart-wrap { height: 280px; }
   .step-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 1rem 0; }
   .step-table th { text-align: left; font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--border); color: var(--text2); font-size: 11px; }
   .step-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); }
@@ -43,7 +36,10 @@
   .fail { color: var(--fail); }
   .principles-box { background: var(--bg2); border-radius: 8px; padding: 1rem 1.25rem; margin: 0 0 1.5rem; font-size: 13px; line-height: 1.7; }
   .principles-box strong { font-weight: 500; }
-  .section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem; }
+  .principle-tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; margin: 0 4px 0 0; font-weight: 500; }
+  .p1 { background: #E6F1FB; color: #0C447C; }
+  .p2 { background: #E1F5EE; color: #085041; }
+  .p3 { background: #EEEDFE; color: #3C3489; }
 </style>
 </head>
 <body>
@@ -58,15 +54,15 @@
   <span class="principle-tag p3">P3</span> Higher bar at higher levels — convex beta escalation
 </div>
 
-<!-- ── Shared parameters ── -->
+<!-- ── Parameters ── -->
 <div style="margin-bottom: 0.5rem;">
-  <span style="font-size: 13px; color: var(--text2); font-weight: 500;">Shared parameters</span>
+  <span style="font-size: 13px; color: var(--text2); font-weight: 500;">Parameters</span>
 </div>
 
 <div class="ctrl-row">
   <span class="ctrl-label">Current quarterly revenue</span>
   <input type="range" min="0" max="5" value="0.5" step="0.1" id="revNow" />
-  <span class="ctrl-val" id="revNow-out">$1.0M</span>
+  <span class="ctrl-val" id="revNow-out">$0.5M</span>
 </div>
 <div class="ctrl-row">
   <span class="ctrl-label">Revenue growth / quarter</span>
@@ -93,55 +89,44 @@
   <input type="range" min="0.5" max="3" value="1" step="0.1" id="betaStart" />
   <span class="ctrl-val" id="betaStart-out">1.0x</span>
 </div>
-
-<p class="note">Block reward: 67,720 FIL/day with 6-year half-life decay. Beta escalates convexly: beta = beta_start &times; (1 + (alpha/alpha_max)<sup>k</sup>)</p>
-
-<!-- ── Option 1 parameters ── -->
-<hr class="divider" />
-
-<div class="section-header">
-  <span style="font-size: 13px; color: var(--text2); font-weight: 500;">Option 1 parameter</span>
-</div>
-
 <div class="ctrl-row">
-  <span class="ctrl-label">Step size</span>
+  <span class="ctrl-label">Step size (Option 1)</span>
   <input type="range" min="1" max="10" value="5" step="1" id="stepSize" />
   <span class="ctrl-val" id="stepSize-out">5 pp</span>
 </div>
-<p class="note">Option 1 gate: step up only if R<sub>q</sub> &ge; beta &times; (BR<sub>q</sub> &times; current alpha). Option 2: alpha = alpha_max &times; (R<sub>avg</sub> / (beta &times; BR<sub>q</sub>))<sup>k</sup>.</p>
 
-<!-- ── Side-by-side comparison ── -->
+<p class="note">Block reward: 67,720 FIL/day with 6-year half-life decay. Both options use the same target: R<sub>target</sub> = beta &times; BR<sub>q</sub> &times; current alpha. Option 1: pass &rarr; full step, fail &rarr; hold. Option 2: proportional increase (R<sub>q</sub> / R<sub>target</sub> &times; step size).</p>
+
+<!-- ── Charts: beta curve (left) + alpha comparison (right) ── -->
 <hr class="divider" />
 
-<h2>Option 1 vs Option 2</h2>
-<div class="legend-row">
-  <span class="legend-item"><span class="legend-dot" style="background:#D85A30;"></span>Option 1: step-up</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>Option 2: ramp-up</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>Revenue</span>
+<div class="charts-row">
+  <div>
+    <h2>Beta escalation</h2>
+    <p class="note">beta = beta_start &times; (1 + (&alpha;/&alpha;<sub>max</sub>)<sup>k</sup>)</p>
+    <div class="legend-row">
+      <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>Convex (k)</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#B4B2A9;"></span>Linear</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#D85A30;border:1px dashed #D85A30;"></span>Flat</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chartBeta"></canvas></div>
+  </div>
+  <div>
+    <h2>Option 1 vs Option 2</h2>
+    <div class="legend-row">
+      <span class="legend-item"><span class="legend-dot" style="background:#D85A30;"></span>Opt 1: step-up</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>Opt 2: continuous</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>Revenue</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chartAlpha"></canvas></div>
+  </div>
 </div>
-<div class="chart-wrap"><canvas id="chartCompare"></canvas></div>
-<div class="metrics" id="compareMetrics"></div>
 
-<!-- ── Option 1 detail: gate table ── -->
+<!-- ── Option 1 gate table ── -->
 <hr class="divider" />
 
 <h2>Option 1: quarterly gate checks</h2>
 <div id="stepTable"></div>
-
-<!-- ── Beta escalation curve ── -->
-<hr class="divider" />
-
-<h2>Beta escalation curve</h2>
-<p class="note">
-  beta = beta_start &times; (1 + (alpha / alpha_max)<sup>k</sup>). Shows how the revenue bar rises with alpha.
-</p>
-<div class="legend-row">
-  <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>Convex (current k)</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#B4B2A9;"></span>Linear (k=1)</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#D85A30;border:1px dashed #D85A30;"></span>Flat baseline</span>
-</div>
-<div class="chart-wrap"><canvas id="chartBeta"></canvas></div>
-<div class="metrics" id="betaMetrics"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
@@ -201,20 +186,20 @@ function calcStepUp(revs, qBRs, aMax, k, betaStart) {
 
 function calcRampUp(revs, qBRs, aMax, k, betaStart) {
   const ALPHA_START = 5;
+  const stepSize = parseFloat(el('stepSize').value);
   const alphas = [], targets = [];
+  let currentA = 0;
   for (let i = 0; i < QUARTERS; i++) {
-    // R_target = beta × BR_q (total quarterly BR, NOT multiplied by current alpha)
-    // This avoids circular dependency: alpha depends on target, target must not depend on alpha
-    const revT = betaStart * qBRs[i];
-    targets.push(parseFloat(revT.toFixed(3)));
+    const beta = betaStart * (1 + Math.pow(currentA / aMax, k));
+    const gate = beta * (qBRs[i] * currentA / 100);
+    targets.push(parseFloat(gate.toFixed(3)));
     if (i === 0) {
-      alphas.push(ALPHA_START);
-      continue;
+      currentA = ALPHA_START;
+    } else if (currentA < aMax) {
+      const ratio = gate > 0 ? Math.min(revs[i] / gate, 1) : 1;
+      currentA = Math.min(currentA + stepSize * ratio, aMax);
     }
-    const avg3 = i >= 2 ? (revs[i]+revs[i-1]+revs[i-2])/3 : (revs[i]+revs[i-1])/2;
-    // alpha = alpha_max × (R_avg / R_target)^k, floored at alpha_start
-    const a = Math.max(ALPHA_START, aMax * Math.pow(Math.min(avg3/revT, 1), k));
-    alphas.push(parseFloat(Math.min(a, aMax).toFixed(2)));
+    alphas.push(parseFloat(currentA.toFixed(2)));
   }
   return { alphas, targets };
 }
@@ -222,9 +207,9 @@ function calcRampUp(revs, qBRs, aMax, k, betaStart) {
 const co = (yL) => ({
   responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
   scales: {
-    x: { grid: { color: gc }, ticks: { color: tc, font: { size: 11 } } },
-    y: { position: 'left', title: { display: true, text: yL, color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, callback: v => v+'%' }, min: 0 },
-    y2: { position: 'right', title: { display: true, text: 'Revenue ($M)', color: tc, font: { size: 11 } }, grid: { drawOnChartArea: false }, ticks: { color: tc, callback: v => '$'+v+'M' }, min: 0 }
+    x: { grid: { color: gc }, ticks: { color: tc, font: { size: 10 } } },
+    y: { position: 'left', title: { display: true, text: yL, color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => v+'%' }, min: 0 },
+    y2: { position: 'right', title: { display: true, text: '$M', color: tc, font: { size: 11 } }, grid: { drawOnChartArea: false }, ticks: { color: tc, font: { size: 10 }, callback: v => '$'+v+'M' }, min: 0 }
   },
   plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } }
 });
@@ -232,26 +217,23 @@ const co = (yL) => ({
 const betaChartOpts = {
   responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
   scales: {
-    x: { type: 'linear', title: { display: true, text: 'Alpha (%)', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 11 }, callback: v => v+'%' }, min: 0 },
-    y: { type: 'linear', title: { display: true, text: 'Beta (revenue multiplier)', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 11 }, callback: v => v.toFixed(1)+'x' }, min: 0 }
+    x: { type: 'linear', title: { display: true, text: 'Alpha (%)', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => v+'%' }, min: 0 },
+    y: { type: 'linear', title: { display: true, text: 'Beta', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => v.toFixed(1)+'x' }, min: 0 }
   },
   plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + 'x' } } }
 };
 
-let cCompare, cBeta;
+let cAlpha, cBeta;
 function initCharts() {
-  cCompare = new Chart(el('chartCompare'), { type: 'line', data: { labels: qLabels, datasets: [] }, options: co('Alpha (%)') });
+  cAlpha = new Chart(el('chartAlpha'), { type: 'line', data: { labels: qLabels, datasets: [] }, options: co('Alpha (%)') });
   cBeta = new Chart(el('chartBeta'), { type: 'line', data: { datasets: [] }, options: betaChartOpts });
 }
 
-function buildTable(revs, r) {
-  const { alphas, gates, passed } = r;
-  let h = '<table class="step-table"><tr><th>Quarter</th><th>Revenue</th><th>Gate</th><th>Beta_eff</th><th>Pass?</th><th>Alpha</th></tr>';
-  for (let i = 0; i < Math.min(QUARTERS, 12); i++) {
-    const a = i > 0 ? alphas[i-1] : 0;
-    const bEff = alphas[i] !== undefined ? (gates[i] > 0 ? (gates[i] / (getShared().qBRs[i] * a / 100)).toFixed(2) : '—') : '—';
-    h += '<tr><td>Q'+(i+1)+'</td><td>$'+revs[i].toFixed(2)+'M</td><td>$'+gates[i].toFixed(2)+'M</td><td>'+bEff+'x</td><td class="'+(passed[i]?'pass':'fail')+'">'+(passed[i]?'Yes':'No')+'</td><td>'+alphas[i].toFixed(1)+'%</td></tr>';
-  }
+function buildTable(revs, s) {
+  const { alphas, gates, passed } = s;
+  let h = '<table class="step-table"><tr><th>Quarter</th><th>Revenue</th><th>Gate</th><th>Pass?</th><th>Alpha</th></tr>';
+  for (let i = 0; i < Math.min(QUARTERS, 12); i++)
+    h += '<tr><td>Q'+(i+1)+'</td><td>$'+revs[i].toFixed(2)+'M</td><td>$'+gates[i].toFixed(2)+'M</td><td class="'+(passed[i]?'pass':'fail')+'">'+(passed[i]?'Yes':'No')+'</td><td>'+alphas[i].toFixed(1)+'%</td></tr>';
   h += '</table>';
   el('stepTable').innerHTML = h;
 }
@@ -262,60 +244,36 @@ function updateAll() {
   const r = calcRampUp(revs, qBRs, aMax, k, betaStart);
   const maxRev = Math.max(...revs, ...s.gates, ...r.targets) * 1.2;
 
-  // Side-by-side comparison
-  cCompare.data.datasets = [
-    { type:'line', label:'Step-up', data:s.alphas, borderColor:'#D85A30', borderWidth:2.5, pointRadius:3, pointBackgroundColor:'#D85A30', yAxisID:'y', order:1, fill:false },
-    { type:'line', label:'Ramp-up', data:r.alphas, borderColor:'#378ADD', borderWidth:2.5, pointRadius:3, pointBackgroundColor:'#378ADD', yAxisID:'y', order:1, fill:false },
-    { type:'line', label:'Revenue', data:revs, borderColor:'#1D9E75', borderWidth:1.5, borderDash:[5,3], pointRadius:0, yAxisID:'y2', order:2, fill:false }
+  // Combined alpha chart
+  cAlpha.data.datasets = [
+    { label:'Opt 1: step-up', data:s.alphas, borderColor:'#D85A30', borderWidth:2.5, pointRadius:3, pointBackgroundColor:'#D85A30', yAxisID:'y', order:1, fill:false },
+    { label:'Opt 2: continuous', data:r.alphas, borderColor:'#378ADD', borderWidth:2.5, pointRadius:3, pointBackgroundColor:'#378ADD', yAxisID:'y', order:1, fill:false },
+    { label:'Revenue', data:revs, borderColor:'#1D9E75', borderWidth:1.5, borderDash:[5,3], pointRadius:0, yAxisID:'y2', order:2, fill:false }
   ];
-  cCompare.options.scales.y.max = aMax+5;
-  cCompare.options.scales.y2.max = Math.ceil(maxRev);
-  cCompare.update('none');
-
-  const sMaxQ = s.alphas.findIndex(a => a >= aMax);
-  const rMaxQ = r.alphas.findIndex(a => a >= aMax - 0.5);
-  const sTotal = s.alphas.reduce((sum, a, i) => sum + qBRs[i] * a / 100, 0);
-  const rTotal = r.alphas.reduce((sum, a, i) => sum + qBRs[i] * a / 100, 0);
-
-  el('compareMetrics').innerHTML =
-    '<div class="metric"><p class="metric-label">Step-up reaches max</p><p class="metric-val">'+(sMaxQ>=0?'Q'+(sMaxQ+1):'Never')+'</p></div>'+
-    '<div class="metric"><p class="metric-label">Ramp-up reaches max</p><p class="metric-val">'+(rMaxQ>=0?'Q'+(rMaxQ+1):'Never')+'</p></div>'+
-    '<div class="metric"><p class="metric-label">Step-up total redirected</p><p class="metric-val">$'+sTotal.toFixed(1)+'M</p></div>'+
-    '<div class="metric"><p class="metric-label">Ramp-up total redirected</p><p class="metric-val">$'+rTotal.toFixed(1)+'M</p></div>'+
-    '<div class="metric"><p class="metric-label">Q1 block reward</p><p class="metric-val">$'+qBRs[0].toFixed(1)+'M</p></div>'+
-    '<div class="metric"><p class="metric-label">Q'+QUARTERS+' block reward</p><p class="metric-val">$'+qBRs[QUARTERS-1].toFixed(1)+'M</p></div>';
+  cAlpha.options.scales.y.max = aMax+5;
+  cAlpha.options.scales.y2.max = Math.ceil(maxRev);
+  cAlpha.update('none');
 
   buildTable(revs, s);
 
   // Beta escalation curve
-  const bK = k;
   const STEPS = 50;
   const convexPts = [], linearPts = [], flatPts = [];
   for (let i = 0; i <= STEPS; i++) {
     const alpha = (aMax / STEPS) * i;
     const ratio = alpha / aMax;
-    convexPts.push({ x: alpha, y: betaStart * (1 + Math.pow(ratio, bK)) });
+    convexPts.push({ x: alpha, y: betaStart * (1 + Math.pow(ratio, k)) });
     linearPts.push({ x: alpha, y: betaStart * (1 + ratio) });
     flatPts.push({ x: alpha, y: betaStart });
   }
   cBeta.data.datasets = [
-    { label: 'Convex (k=' + bK.toFixed(1) + ')', data: convexPts, borderColor: '#378ADD', borderWidth: 2.5, pointRadius: 0, fill: false },
+    { label: 'Convex (k=' + k.toFixed(1) + ')', data: convexPts, borderColor: '#378ADD', borderWidth: 2.5, pointRadius: 0, fill: false },
     { label: 'Linear (k=1)', data: linearPts, borderColor: '#B4B2A9', borderWidth: 1.5, pointRadius: 0, fill: false },
     { label: 'Flat baseline', data: flatPts, borderColor: '#D85A30', borderWidth: 1.5, borderDash: [5,3], pointRadius: 0, fill: false }
   ];
   cBeta.options.scales.x.max = aMax;
   cBeta.options.scales.y.max = Math.ceil(convexPts[STEPS].y * 1.1 * 10) / 10;
   cBeta.update('none');
-
-  const keyAlphas = [5, Math.round(aMax * 0.5), Math.round(aMax * 0.8), aMax];
-  const unique = [...new Set(keyAlphas)];
-  let bMetricsHtml = '';
-  unique.forEach(a => {
-    const ratio = a / aMax;
-    const betaVal = betaStart * (1 + Math.pow(ratio, bK));
-    bMetricsHtml += '<div class="metric"><p class="metric-label">Beta at &alpha;=' + a + '%</p><p class="metric-val">' + betaVal.toFixed(2) + 'x</p></div>';
-  });
-  el('betaMetrics').innerHTML = bMetricsHtml;
 }
 
 initCharts();
