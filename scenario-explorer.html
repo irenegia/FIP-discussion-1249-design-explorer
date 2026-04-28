@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alpha Step-Up Scenario Explorer</title>
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --text: #1a1a1a; --text2: #6b6b6b;
+    --border: rgba(0,0,0,0.1); --blue: #378ADD; --orange: #D85A30;
+    --green: #1D9E75; --gray: #B4B2A9; --pass: #639922; --fail: #E24B4A;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --mono: 'SF Mono', 'Fira Code', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem; line-height: 1.6; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 0.25rem; }
+  .subtitle { font-size: 14px; color: var(--text2); margin-bottom: 1.5rem; }
+  .tab-bar { display: flex; gap: 0; margin: 0 0 1.5rem; border-bottom: 1px solid var(--border); }
+  .tab-btn { padding: 10px 18px; font-size: 14px; font-weight: 500; background: none; border: none; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: var(--sans); }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--blue); }
+  .tab-btn:hover { color: var(--text); }
+  .section { display: none; }
+  .section.active { display: block; }
+  .ctrl-row { display: flex; align-items: center; gap: 12px; margin: 0 0 0.75rem; }
+  .ctrl-label { font-size: 13px; color: var(--text2); min-width: 150px; }
+  .ctrl-row input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; appearance: none; background: var(--border); border-radius: 2px; outline: none; }
+  .ctrl-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--blue); cursor: pointer; border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--border); }
+  .ctrl-val { font-size: 13px; font-weight: 500; min-width: 56px; text-align: right; }
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 1rem 0; }
+  .metric { background: var(--bg2); border-radius: 8px; padding: 0.6rem 0.8rem; }
+  .metric-label { font-size: 11px; color: var(--text2); margin-bottom: 2px; }
+  .metric-val { font-size: 18px; font-weight: 500; }
+  .legend-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 0.5rem 0 8px; font-size: 12px; color: var(--text2); }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+  .principle-tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; margin: 0 4px 0 0; font-weight: 500; }
+  .p1 { background: #E6F1FB; color: #0C447C; }
+  .p2 { background: #E1F5EE; color: #085041; }
+  .p3 { background: #EEEDFE; color: #3C3489; }
+  .note { font-size: 13px; color: var(--text2); margin: 0 0 0.5rem; }
+  .chart-wrap { position: relative; width: 100%; height: 300px; margin-bottom: 1rem; }
+  .step-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 1rem 0; }
+  .step-table th { text-align: left; font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--border); color: var(--text2); font-size: 11px; }
+  .step-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); }
+  .pass { color: var(--pass); }
+  .fail { color: var(--fail); }
+  .principles-box { background: var(--bg2); border-radius: 8px; padding: 1rem 1.25rem; margin: 0 0 1.5rem; font-size: 13px; line-height: 1.7; }
+  .principles-box strong { font-weight: 500; }
+</style>
+</head>
+<body>
+
+<h1>Alpha step-up scenario explorer</h1>
+<p class="subtitle">Compare two designs for the revenue-gated BR redirect mechanism</p>
+
+<div class="principles-box">
+  <strong>Design principles</strong><br>
+  <span class="principle-tag p1">P1</span> Don't step up without proof — revenue gates every increase<br>
+  <span class="principle-tag p2">P2</span> Start small, step frequently — 5% initial, quarterly or continuous<br>
+  <span class="principle-tag p3">P3</span> Higher bar at higher levels — convex or escalating beta
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('opt1')">Option 1: modified step-up</button>
+  <button class="tab-btn" onclick="switchTab('opt2')">Option 2: continuous ramp-up</button>
+  <button class="tab-btn" onclick="switchTab('compare')">Side-by-side</button>
+  <button class="tab-btn" onclick="switchTab('beta')">Beta curve</button>
+</div>
+
+<div style="margin-bottom: 0.5rem;">
+  <span style="font-size: 13px; color: var(--text2); font-weight: 500;">Shared parameters</span>
+</div>
+
+<div class="ctrl-row">
+  <span class="ctrl-label">Current quarterly revenue</span>
+  <input type="range" min="0" max="20" value="1" step="0.25" id="revNow" />
+  <span class="ctrl-val" id="revNow-out">$1.0M</span>
+</div>
+<div class="ctrl-row">
+  <span class="ctrl-label">Revenue growth / quarter</span>
+  <input type="range" min="0" max="100" value="20" step="5" id="revGrowth" />
+  <span class="ctrl-val" id="revGrowth-out">20%</span>
+</div>
+<div class="ctrl-row">
+  <span class="ctrl-label">Quarterly block rewards</span>
+  <input type="range" min="5" max="40" value="20" step="1" id="qBR" />
+  <span class="ctrl-val" id="qBR-out">$20M</span>
+</div>
+<div class="ctrl-row">
+  <span class="ctrl-label">Alpha max</span>
+  <input type="range" min="5" max="80" value="50" step="5" id="aMax" />
+  <span class="ctrl-val" id="aMax-out">50%</span>
+</div>
+
+<hr class="divider" />
+
+<div id="sec-opt1" class="section active">
+  <div style="margin-bottom: 0.75rem;">
+    <span class="principle-tag p1">P1</span>
+    <span class="principle-tag p2">P2</span>
+    <span class="principle-tag p3">P3</span>
+    <span style="font-size: 13px; color: var(--text2);">Step-up with revenue gate</span>
+  </div>
+  <div class="ctrl-row">
+    <span class="ctrl-label">Step size</span>
+    <input type="range" min="1" max="10" value="5" step="1" id="stepSize" />
+    <span class="ctrl-val" id="stepSize-out">5 pp</span>
+  </div>
+  <div class="ctrl-row">
+    <span class="ctrl-label">Beta_start</span>
+    <input type="range" min="0.5" max="3" value="1" step="0.1" id="beta1" />
+    <span class="ctrl-val" id="beta1-out">1.0x</span>
+  </div>
+  <p class="note">Gate rule: step up only if quarterly revenue &ge; beta &times; (quarterly BR &times; current alpha). Beta escalates convexly: beta = beta_start &times; (1 + (alpha/alpha_max)^2) (P3).</p>
+  <div class="legend-row">
+    <span class="legend-item"><span class="legend-dot" style="background:#D85A30;"></span>Alpha (step-up)</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>Revenue</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#B4B2A9;border:1px dashed #888;"></span>Gate threshold</span>
+  </div>
+  <div class="chart-wrap"><canvas id="chart1"></canvas></div>
+  <div id="stepTable"></div>
+</div>
+
+<div id="sec-opt2" class="section">
+  <div style="margin-bottom: 0.75rem;">
+    <span class="principle-tag p1">P1</span>
+    <span class="principle-tag p3">P3</span>
+    <span style="font-size: 13px; color: var(--text2);">Continuous ramp-up function</span>
+  </div>
+  <div class="ctrl-row">
+    <span class="ctrl-label">k (convexity)</span>
+    <input type="range" min="1" max="4" value="2" step="0.1" id="kParam" />
+    <span class="ctrl-val" id="kParam-out">2.0</span>
+  </div>
+  <div class="ctrl-row">
+    <span class="ctrl-label">Beta</span>
+    <input type="range" min="0.5" max="3" value="1" step="0.1" id="beta2" />
+    <span class="ctrl-val" id="beta2-out">1.0x</span>
+  </div>
+  <p class="note">Formula: alpha = alpha_max &times; (R_avg / R_target)^k, where R_target = beta &times; BR_q &times; current_alpha. R_avg = trailing 3-month average on-chain deal revenue. Capped at alpha_max.</p>
+  <div class="legend-row">
+    <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>Alpha (ramp-up)</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>Revenue</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#B4B2A9;border:1px dashed #888;"></span>Rev target</span>
+  </div>
+  <div class="chart-wrap"><canvas id="chart2"></canvas></div>
+</div>
+
+<div id="sec-compare" class="section">
+  <div style="margin-bottom: 0.75rem;">
+    <span style="font-size: 13px; color: var(--text2);">Same revenue scenario, both mechanisms</span>
+  </div>
+  <div class="legend-row">
+    <span class="legend-item"><span class="legend-dot" style="background:#D85A30;"></span>Option 1: step-up</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>Option 2: ramp-up</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>Revenue</span>
+  </div>
+  <div class="chart-wrap"><canvas id="chart3"></canvas></div>
+  <div class="metrics" id="compareMetrics"></div>
+</div>
+
+<div id="sec-beta" class="section">
+  <div style="margin-bottom: 0.75rem;">
+    <span class="principle-tag p3">P3</span>
+    <span style="font-size: 13px; color: var(--text2);">Beta escalation: how the revenue bar rises with alpha</span>
+  </div>
+  <div class="ctrl-row">
+    <span class="ctrl-label">Beta_start</span>
+    <input type="range" min="0.5" max="3" value="1" step="0.1" id="betaCurveStart" />
+    <span class="ctrl-val" id="betaCurveStart-out">1.0x</span>
+  </div>
+  <div class="ctrl-row">
+    <span class="ctrl-label">k (convexity)</span>
+    <input type="range" min="1" max="4" value="2" step="0.1" id="betaCurveK" />
+    <span class="ctrl-val" id="betaCurveK-out">2.0</span>
+  </div>
+  <p class="note">Formula: beta = beta_start &times; (1 + (alpha / alpha_max)^k). At higher alpha, proportionally more revenue is required to justify the redirect.</p>
+  <div class="legend-row">
+    <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>Convex (k from slider)</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#B4B2A9;"></span>Linear (k=1)</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#D85A30;border:1px dashed #D85A30;"></span>Flat baseline (beta_start)</span>
+  </div>
+  <div class="chart-wrap"><canvas id="chart4"></canvas></div>
+  <div class="metrics" id="betaMetrics"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const gc = 'rgba(0,0,0,0.05)';
+const tc = 'rgba(0,0,0,0.4)';
+const QUARTERS = 16;
+const qLabels = Array.from({length: QUARTERS}, (_, i) => 'Q' + (i+1));
+
+function el(id) { return document.getElementById(id); }
+
+const TABS = ['opt1','opt2','compare','beta'];
+function switchTab(t) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', TABS[i] === t);
+  });
+  TABS.forEach(s => {
+    el('sec-'+s).classList.toggle('active', s === t);
+  });
+  updateAll();
+  // Charts initialized while hidden have zero size — force resize on tab switch
+  if (c1) c1.resize();
+  if (c2) c2.resize();
+  if (c3) c3.resize();
+  if (c4) c4.resize();
+}
+
+function getShared() {
+  const revNow = parseFloat(el('revNow').value);
+  const revGrowth = parseFloat(el('revGrowth').value) / 100;
+  const qBR = parseFloat(el('qBR').value);
+  const aMax = parseFloat(el('aMax').value);
+  el('revNow-out').textContent = '$' + revNow.toFixed(revNow < 1 ? 2 : 1) + 'M';
+  el('revGrowth-out').textContent = Math.round(revGrowth * 100) + '%';
+  el('qBR-out').textContent = '$' + qBR + 'M';
+  el('aMax-out').textContent = aMax + '%';
+  const revs = [];
+  for (let i = 0; i < QUARTERS; i++) revs.push(parseFloat((revNow * Math.pow(1 + revGrowth, i)).toFixed(3)));
+  return { revs, qBR, aMax };
+}
+
+function calcStepUp(revs, qBR, aMax) {
+  const stepSize = parseFloat(el('stepSize').value);
+  const beta = parseFloat(el('beta1').value);
+  el('stepSize-out').textContent = stepSize + ' pp';
+  el('beta1-out').textContent = beta.toFixed(1) + 'x';
+  const alphas = [], gates = [], passed = [];
+  let currentA = 0;
+  for (let i = 0; i < QUARTERS; i++) {
+    const betaEff = beta * (1 + Math.pow(currentA / aMax, 2));
+    const gate = betaEff * (qBR * currentA / 100);
+    gates.push(parseFloat(gate.toFixed(3)));
+    if (i > 0 && currentA < aMax) {
+      if (revs[i] >= gate && gate >= 0) { currentA = Math.min(currentA + stepSize, aMax); passed.push(true); }
+      else passed.push(false);
+    } else { if (i === 0) currentA = stepSize; passed.push(i === 0); }
+    alphas.push(currentA);
+  }
+  return { alphas, gates, passed };
+}
+
+function calcRampUp(revs, qBR, aMax) {
+  const k = parseFloat(el('kParam').value);
+  const beta = parseFloat(el('beta2').value);
+  el('kParam-out').textContent = k.toFixed(1);
+  el('beta2-out').textContent = beta.toFixed(1) + 'x';
+  const alphas = [], targets = [];
+  for (let i = 0; i < QUARTERS; i++) {
+    const prevA = i > 0 ? alphas[i-1] : 5; // start from alpha_start (5%) for target calc
+    // R_target = beta × BR_q × current_alpha (rate-vs-rate)
+    const revT = Math.max(beta * qBR * prevA / 100, 0.1);
+    targets.push(parseFloat(revT.toFixed(3)));
+    // R_avg = trailing 3-month average (quarter ≈ 3 months, so avg of up to 3 prior quarters)
+    const avg3 = i >= 2 ? (revs[i]+revs[i-1]+revs[i-2])/3 : i >= 1 ? (revs[i]+revs[i-1])/2 : revs[i];
+    const a = aMax * Math.pow(Math.min(avg3/revT, 1), k);
+    alphas.push(parseFloat(Math.min(a, aMax).toFixed(2)));
+  }
+  return { alphas, targets };
+}
+
+const co = (yL) => ({
+  responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
+  scales: {
+    x: { grid: { color: gc }, ticks: { color: tc, font: { size: 11 } } },
+    y: { position: 'left', title: { display: true, text: yL, color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, callback: v => v+'%' }, min: 0 },
+    y2: { position: 'right', title: { display: true, text: 'Revenue ($M)', color: tc, font: { size: 11 } }, grid: { drawOnChartArea: false }, ticks: { color: tc, callback: v => '$'+v+'M' }, min: 0 }
+  },
+  plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } }
+});
+
+const betaChartOpts = {
+  responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
+  scales: {
+    x: { type: 'linear', title: { display: true, text: 'Alpha (%)', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 11 }, callback: v => v+'%' }, min: 0 },
+    y: { type: 'linear', title: { display: true, text: 'Beta (revenue multiplier)', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 11 }, callback: v => v.toFixed(1)+'x' }, min: 0 }
+  },
+  plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + 'x' } } }
+};
+
+let c1, c2, c3, c4;
+function initCharts() {
+  c1 = new Chart(el('chart1'), { type: 'bar', data: { labels: qLabels, datasets: [] }, options: co('Alpha (%)') });
+  c2 = new Chart(el('chart2'), { type: 'bar', data: { labels: qLabels, datasets: [] }, options: co('Alpha (%)') });
+  c3 = new Chart(el('chart3'), { type: 'bar', data: { labels: qLabels, datasets: [] }, options: co('Alpha (%)') });
+  c4 = new Chart(el('chart4'), { type: 'line', data: { datasets: [] }, options: betaChartOpts });
+}
+
+function buildTable(revs, r, qBR) {
+  const { alphas, gates, passed } = r;
+  let h = '<table class="step-table"><tr><th>Quarter</th><th>Revenue</th><th>Gate threshold</th><th>Pass?</th><th>Alpha</th></tr>';
+  for (let i = 0; i < Math.min(QUARTERS, 12); i++)
+    h += '<tr><td>Q'+(i+1)+'</td><td>$'+revs[i].toFixed(2)+'M</td><td>$'+gates[i].toFixed(2)+'M</td><td class="'+(passed[i]?'pass':'fail')+'">'+(passed[i]?'Yes':'No')+'</td><td>'+alphas[i].toFixed(1)+'%</td></tr>';
+  h += '</table>';
+  el('stepTable').innerHTML = h;
+}
+
+function updateAll() {
+  const { revs, qBR, aMax } = getShared();
+  const s = calcStepUp(revs, qBR, aMax);
+  const r = calcRampUp(revs, qBR, aMax);
+  const maxRev = Math.max(...revs, ...s.gates, ...r.targets) * 1.2;
+
+  c1.data.datasets = [
+    { type:'bar', label:'Alpha', data:s.alphas, backgroundColor:'#D85A30', yAxisID:'y', order:2, barPercentage:0.5 },
+    { type:'line', label:'Revenue', data:revs, borderColor:'#1D9E75', borderWidth:2, pointRadius:3, pointBackgroundColor:'#1D9E75', yAxisID:'y2', order:1, fill:false },
+    { type:'line', label:'Gate', data:s.gates, borderColor:'#B4B2A9', borderDash:[5,3], borderWidth:1.5, pointRadius:0, yAxisID:'y2', order:1, fill:false }
+  ];
+  c1.options.scales.y.max = aMax+5;
+  c1.options.scales.y2.max = Math.ceil(maxRev);
+  c1.update('none');
+  buildTable(revs, s, qBR);
+
+  c2.data.datasets = [
+    { type:'bar', label:'Alpha', data:r.alphas, backgroundColor:'#378ADD', yAxisID:'y', order:2, barPercentage:0.5 },
+    { type:'line', label:'Revenue', data:revs, borderColor:'#1D9E75', borderWidth:2, pointRadius:3, pointBackgroundColor:'#1D9E75', yAxisID:'y2', order:1, fill:false },
+    { type:'line', label:'Rev target', data:r.targets, borderColor:'#B4B2A9', borderDash:[5,3], borderWidth:1.5, pointRadius:0, yAxisID:'y2', order:1, fill:false }
+  ];
+  c2.options.scales.y.max = aMax+5;
+  c2.options.scales.y2.max = Math.ceil(maxRev);
+  c2.update('none');
+
+  c3.data.datasets = [
+    { type:'bar', label:'Step-up', data:s.alphas, backgroundColor:'rgba(216,90,48,0.6)', yAxisID:'y', order:3, barPercentage:0.35, categoryPercentage:0.8 },
+    { type:'bar', label:'Ramp-up', data:r.alphas, backgroundColor:'rgba(55,138,221,0.6)', yAxisID:'y', order:3, barPercentage:0.35, categoryPercentage:0.8 },
+    { type:'line', label:'Revenue', data:revs, borderColor:'#1D9E75', borderWidth:2, pointRadius:3, pointBackgroundColor:'#1D9E75', yAxisID:'y2', order:1, fill:false }
+  ];
+  c3.options.scales.y.max = aMax+5;
+  c3.options.scales.y2.max = Math.ceil(maxRev);
+  c3.update('none');
+
+  const sMaxQ = s.alphas.findIndex(a => a >= aMax);
+  const rMaxQ = r.alphas.findIndex(a => a >= aMax - 0.5);
+  const sTotal = s.alphas.reduce((sum, a) => sum + qBR * a / 100, 0);
+  const rTotal = r.alphas.reduce((sum, a) => sum + qBR * a / 100, 0);
+
+  el('compareMetrics').innerHTML =
+    '<div class="metric"><p class="metric-label">Step-up reaches max</p><p class="metric-val">'+(sMaxQ>=0?'Q'+(sMaxQ+1):'Never')+'</p></div>'+
+    '<div class="metric"><p class="metric-label">Ramp-up reaches max</p><p class="metric-val">'+(rMaxQ>=0?'Q'+(rMaxQ+1):'Never')+'</p></div>'+
+    '<div class="metric"><p class="metric-label">Step-up total redirected</p><p class="metric-val">$'+sTotal.toFixed(1)+'M</p></div>'+
+    '<div class="metric"><p class="metric-label">Ramp-up total redirected</p><p class="metric-val">$'+rTotal.toFixed(1)+'M</p></div>';
+
+  // Beta curve tab
+  const bStart = parseFloat(el('betaCurveStart').value);
+  const bK = parseFloat(el('betaCurveK').value);
+  el('betaCurveStart-out').textContent = bStart.toFixed(1) + 'x';
+  el('betaCurveK-out').textContent = bK.toFixed(1);
+  const STEPS = 50;
+  const convexPts = [], linearPts = [], flatPts = [];
+  for (let i = 0; i <= STEPS; i++) {
+    const alpha = (aMax / STEPS) * i;
+    const ratio = alpha / aMax;
+    convexPts.push({ x: alpha, y: bStart * (1 + Math.pow(ratio, bK)) });
+    linearPts.push({ x: alpha, y: bStart * (1 + ratio) });
+    flatPts.push({ x: alpha, y: bStart });
+  }
+  c4.data.datasets = [
+    { label: 'Convex (k=' + bK.toFixed(1) + ')', data: convexPts, borderColor: '#378ADD', borderWidth: 2.5, pointRadius: 0, fill: false },
+    { label: 'Linear (k=1)', data: linearPts, borderColor: '#B4B2A9', borderWidth: 1.5, pointRadius: 0, fill: false },
+    { label: 'Flat baseline', data: flatPts, borderColor: '#D85A30', borderWidth: 1.5, borderDash: [5,3], pointRadius: 0, fill: false }
+  ];
+  c4.options.scales.x.max = aMax;
+  c4.options.scales.y.max = Math.ceil(convexPts[STEPS].y * 1.1 * 10) / 10;
+  c4.update('none');
+
+  // Beta metrics: show beta values at key alpha levels
+  const keyAlphas = [5, Math.round(aMax * 0.5), Math.round(aMax * 0.8), aMax];
+  const unique = [...new Set(keyAlphas)];
+  let bMetricsHtml = '';
+  unique.forEach(a => {
+    const ratio = a / aMax;
+    const betaVal = bStart * (1 + Math.pow(ratio, bK));
+    bMetricsHtml += '<div class="metric"><p class="metric-label">Beta at &alpha;=' + a + '%</p><p class="metric-val">' + betaVal.toFixed(2) + 'x</p></div>';
+  });
+  el('betaMetrics').innerHTML = bMetricsHtml;
+}
+
+initCharts();
+updateAll();
+['revNow','revGrowth','qBR','aMax','stepSize','beta1','kParam','beta2','betaCurveStart','betaCurveK'].forEach(id => el(id).addEventListener('input', updateAll));
+
+</script>
+</body>
+</html>
