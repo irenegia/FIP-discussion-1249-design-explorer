@@ -108,7 +108,7 @@
   <input type="range" min="1" max="10" value="5" step="1" id="stepSize" />
   <span class="ctrl-val" id="stepSize-out">5 pp</span>
 </div>
-<p class="note">Gate rule: step up only if R<sub>q</sub> &ge; beta &times; (BR<sub>q</sub> &times; current alpha). Option 2 uses: alpha = alpha_max &times; (R<sub>avg</sub> / R<sub>target</sub>)<sup>k</sup>.</p>
+<p class="note">Option 1 gate: step up only if R<sub>q</sub> &ge; beta &times; (BR<sub>q</sub> &times; current alpha). Option 2: alpha = alpha_max &times; (R<sub>avg</sub> / (beta &times; BR<sub>q</sub>))<sup>k</sup>.</p>
 
 <!-- ── Side-by-side comparison ── -->
 <hr class="divider" />
@@ -203,18 +203,16 @@ function calcRampUp(revs, qBRs, aMax, k, betaStart) {
   const ALPHA_START = 5;
   const alphas = [], targets = [];
   for (let i = 0; i < QUARTERS; i++) {
+    // R_target = beta × BR_q (total quarterly BR, NOT multiplied by current alpha)
+    // This avoids circular dependency: alpha depends on target, target must not depend on alpha
+    const revT = betaStart * qBRs[i];
+    targets.push(parseFloat(revT.toFixed(3)));
     if (i === 0) {
-      // Q1: both options start at alpha_start
       alphas.push(ALPHA_START);
-      targets.push(0);
       continue;
     }
-    const prevA = alphas[i-1];
-    const beta = betaStart * (1 + Math.pow(prevA / aMax, k));
-    const revT = Math.max(beta * qBRs[i] * prevA / 100, 0.1);
-    targets.push(parseFloat(revT.toFixed(3)));
     const avg3 = i >= 2 ? (revs[i]+revs[i-1]+revs[i-2])/3 : (revs[i]+revs[i-1])/2;
-    // Compute new alpha: can go up or down based on revenue vs target
+    // alpha = alpha_max × (R_avg / R_target)^k, floored at alpha_start
     const a = Math.max(ALPHA_START, aMax * Math.pow(Math.min(avg3/revT, 1), k));
     alphas.push(parseFloat(Math.min(a, aMax).toFixed(2)));
   }
