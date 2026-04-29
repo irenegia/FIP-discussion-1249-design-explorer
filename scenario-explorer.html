@@ -29,6 +29,7 @@
   .chart-wrap { position: relative; width: 100%; height: 300px; margin-bottom: 0.5rem; }
   .charts-row { display: grid; grid-template-columns: 1fr 1.6fr; gap: 24px; align-items: start; }
   .charts-row .chart-wrap { height: 280px; }
+
   .step-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 1rem 0; }
   .step-table th { text-align: left; font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--border); color: var(--text2); font-size: 11px; }
   .step-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); }
@@ -151,22 +152,9 @@
   </div>
 </div>
 
-<!-- ── Option 1 detail ── -->
 <hr class="divider" />
-
-<details open style="margin-bottom:1rem;">
-<summary style="cursor:pointer; font-size:15px; font-weight:500;">Option 1A: revenue vs gate target</summary>
-<div style="margin-top:0.75rem;">
-  <div class="legend-row">
-    <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;border:1px dashed #1D9E75;"></span>Modelled revenue</span>
-    <span class="legend-item"><span class="legend-dot" style="background:#B4B2A9;border:1px dashed #B4B2A9;"></span>Gate target</span>
-    <span class="legend-item"><span class="legend-dot" style="background:#E24B4A;"></span>Alpha (right axis)</span>
-  </div>
-  <div class="chart-wrap"><canvas id="chartGate"></canvas></div>
-  <h2 style="margin-top:1rem;">Option 1A: quarterly gate checks</h2>
-  <div id="stepTable"></div>
-</div>
-</details>
+<h2>Option 1: quarterly gate checks</h2>
+<div id="stepTable"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
@@ -371,21 +359,10 @@ const betaChartOpts = {
   plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + 'x' } } }
 };
 
-const gateChartOpts = {
-  responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
-  scales: {
-    x: { grid: { color: gc }, ticks: { color: tc, font: { size: 10 } } },
-    y: { position: 'left', title: { display: true, text: 'Revenue', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => fmtRevenue(v) }, min: 0 },
-    y2: { position: 'right', title: { display: true, text: 'Alpha (%)', color: tc, font: { size: 11 } }, grid: { drawOnChartArea: false }, ticks: { color: tc, font: { size: 10 }, callback: v => v+'%' }, min: 0 }
-  },
-  plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } }
-};
-
-let cAlpha, cBeta, cGate;
+let cAlpha, cBeta;
 function initCharts() {
   cAlpha = new Chart(el('chartAlpha'), { type: 'line', data: { labels: qLabels, datasets: [] }, options: co('Alpha (%)') });
   cBeta = new Chart(el('chartBeta'), { type: 'line', data: { datasets: [] }, options: betaChartOpts });
-  cGate = new Chart(el('chartGate'), { type: 'line', data: { labels: qLabels, datasets: [] }, options: gateChartOpts });
 }
 
 function buildTable(revs, s) {
@@ -414,17 +391,6 @@ function updateAll() {
   cAlpha.update('none');
 
   buildTable(revs, s);
-
-  // Option 1 gate chart: revenue vs target + alpha
-  const maxGateRev = Math.max(...revs, ...s.gates) * 1.2;
-  cGate.data.datasets = [
-    { label:'Modelled revenue', data:revs, borderColor:'#1D9E75', borderWidth:2.5, borderDash:[5,3], pointRadius:0, yAxisID:'y', order:1, fill:false },
-    { label:'Gate target', data:s.gates, borderColor:'#B4B2A9', borderWidth:2, borderDash:[6,3], pointRadius:0, yAxisID:'y', order:1, fill:false, stepped:'after' },
-    { label:'Alpha', data:s.alphas, borderColor:'#E24B4A', borderWidth:2, pointRadius:0, yAxisID:'y2', order:2, fill:false, stepped:'after' }
-  ];
-  cGate.options.scales.y.max = Math.ceil(maxGateRev * 10) / 10 || 1;
-  cGate.options.scales.y2.max = aMax + 5;
-  cGate.update('none');
 
   // Beta escalation curve
   const STEPS = 50;
