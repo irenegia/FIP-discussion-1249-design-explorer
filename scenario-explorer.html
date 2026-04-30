@@ -53,6 +53,17 @@
   <span class="principle-tag p1">P1</span> Don't step up without proof — revenue gates every increase<br>
   <span class="principle-tag p2">P2</span> Start small, step frequently — 5% initial, quarterly or continuous<br>
   <span class="principle-tag p3">P3</span> Revenue bar to pass the gate escalates with alpha — shape controlled by k
+  <br><br>
+  <strong>Options compared</strong><br>
+  <span style="color:#D85A30;">&#9632;</span> <strong>Option 1 — Quarterly step-up:</strong> every quarter, check revenue against the gate. Pass → full step up. Fail → hold.<br>
+  <code style="font-size:12px; background:rgba(0,0,0,0.05); padding:2px 6px; border-radius:3px; display:inline-block; margin:2px 0 6px 18px;">
+  gate = beta × BR_q × alpha &nbsp;|&nbsp; if R_q ≥ gate → alpha += step_size, else hold
+  </code><br>
+  <span style="color:#378ADD;">&#9632;</span> <strong>Option 2 — Weekly continuous:</strong> every week, alpha increases proportionally to how much of the gate is met over a 13-week rolling window.<br>
+  <code style="font-size:12px; background:rgba(0,0,0,0.05); padding:2px 6px; border-radius:3px; display:inline-block; margin:2px 0 6px 18px;">
+  gate = beta × BR_13w × alpha &nbsp;|&nbsp; ratio = min(R_13w / gate, 1) &nbsp;|&nbsp; alpha += (step_size/13) × ratio
+  </code><br>
+  <span style="font-size:12px; color:var(--text2);">Both: beta = beta_start × (1 + (alpha / alpha_max)<sup>k</sup>) — gate escalates as alpha grows.</span>
   <br><span style="font-size:12px; margin-top:4px; display:inline-block;">More info: <a href="https://docs.google.com/document/d/1WWlIpBnjSxNjxTLP5_ykzMHR9QTiC-foOx_cmJkXdnQ/edit?tab=t.hqep0n7h48xs" target="_blank" style="color:#378ADD;">FIL+ Reform – Alpha Ramp-Up Design Doc</a></span>
 </div>
 
