@@ -137,12 +137,12 @@
   <span class="ctrl-val" id="kParam-out">2.0</span>
 </div>
 <div class="ctrl-row">
-  <span class="ctrl-label">Beta_start</span>
+  <span class="ctrl-label">Gate multiplier (start)</span>
   <input type="range" min="0.1" max="3" value="1" step="0.1" id="betaStart" />
   <span class="ctrl-val" id="betaStart-out">1.0x</span>
 </div>
 <div class="ctrl-row">
-  <span class="ctrl-label">Beta_max</span>
+  <span class="ctrl-label">Gate multiplier (max)</span>
   <input type="range" min="1" max="30" value="5" step="0.5" id="betaMax" />
   <span class="ctrl-val" id="betaMax-out">5.0x</span>
 </div>
@@ -157,10 +157,10 @@
 
 <div class="charts-row">
   <div>
-    <h2>Beta escalation</h2>
+    <h2>Gate multiplier escalation</h2>
     <p class="note">beta = beta_start + (beta_max &minus; beta_start) &times; ((&alpha; &minus; &alpha;<sub>start</sub>) / (&alpha;<sub>max</sub> &minus; &alpha;<sub>start</sub>))<sup>k</sup></p>
     <div class="legend-row">
-      <span class="legend-item"><span class="legend-dot" style="background:#7B3FBF;"></span>Beta (k)</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#7B3FBF;"></span>Gate multiplier (k)</span>
       <span class="legend-item"><span class="legend-dot" style="background:#B4B2A9;"></span>Linear</span>
       <span class="legend-item"><span class="legend-dot" style="background:#C4892E;border:1px dashed #C4892E;"></span>Flat</span>
     </div>
@@ -377,7 +377,7 @@ const betaChartOpts = {
   responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
   scales: {
     x: { type: 'linear', title: { display: true, text: 'Alpha (%)', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => v+'%' }, min: 0 },
-    y: { type: 'linear', title: { display: true, text: 'Beta', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => v.toFixed(1)+'x' }, min: 0 }
+    y: { type: 'linear', title: { display: true, text: 'Gate multiplier (beta)', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => v.toFixed(1)+'x' }, min: 0 }
   },
   plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + 'x' } } }
 };
@@ -461,7 +461,7 @@ function updateAll() {
   ];
   cEmission.update('none');
 
-  // Beta escalation curve
+  // Gate multiplier escalation curve
   const STEPS = 50;
   const alphaStart = parseFloat(el('stepSize').value);
   const convexPts = [], linearPts = [], flatPts = [];
@@ -473,7 +473,7 @@ function updateAll() {
     flatPts.push({ x: alpha, y: betaStart });
   }
   cBeta.data.datasets = [
-    { label: 'Beta (k=' + k.toFixed(1) + ')', data: convexPts, borderColor: '#7B3FBF', borderWidth: 2.5, pointRadius: 0, fill: false },
+    { label: 'Gate mult. (k=' + k.toFixed(1) + ')', data: convexPts, borderColor: '#7B3FBF', borderWidth: 2.5, pointRadius: 0, fill: false },
     { label: 'Linear (k=1)', data: linearPts, borderColor: '#B4B2A9', borderWidth: 1.5, pointRadius: 0, fill: false },
     { label: 'Flat baseline', data: flatPts, borderColor: '#C4892E', borderWidth: 1.5, borderDash: [5,3], pointRadius: 0, fill: false }
   ];
