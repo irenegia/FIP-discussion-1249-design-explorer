@@ -185,11 +185,10 @@
 <div class="chart-wrap"><canvas id="chartAlpha"></canvas></div>
 
 <hr class="divider" />
-<h2>Emission vs Revenue</h2>
-<p class="note">Block reward emission per quarter compared to deal revenue and network revenue (0.5% payment fee)</p>
+<h2>Emission vs Network Revenue</h2>
+<p class="note">Quarterly block reward emission compared to quarterly network revenue (0.5% payment fee on deal revenue)</p>
 <div class="legend-row">
   <span class="legend-item"><span class="legend-dot" style="background:#D85A30;"></span>Block reward (emission)</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>Deal revenue</span>
   <span class="legend-item"><span class="legend-dot" style="background:#7B3FBF;"></span>Network revenue (0.5%)</span>
 </div>
 <div class="chart-wrap"><canvas id="chartEmission"></canvas></div>
@@ -414,7 +413,7 @@ function initCharts() {
   cEmission = new Chart(el('chartEmission'), { type: 'line', data: { labels: qLabels, datasets: [] }, options: emissionChartOpts });
 }
 
-function buildRevProjection(revs) {
+function buildRevProjection(revs, qBRs) {
   let h = '<table class="step-table"><tr><th></th>';
   for (let i = 0; i < QUARTERS; i++) h += '<th>Q'+(i+1)+'</th>';
   h += '</tr><tr><td style="color:var(--text2);">Deal rev</td>';
@@ -465,14 +464,13 @@ function updateAll() {
   cGrowth.update('none');
 
   buildTable(revs, s);
-  buildRevProjection(revs);
+  buildRevProjection(revs, qBRs);
 
   // Emission vs Revenue chart
   const netRevs = revs.map(r => r * 0.005); // 0.5% payment fee = network revenue
   cEmission.data.datasets = [
     { label: 'Block reward', data: qBRs, borderColor: '#D85A30', borderWidth: 2.5, pointRadius: 0, fill: false },
-    { label: 'Deal revenue', data: revs, borderColor: '#1D9E75', borderWidth: 2, pointRadius: 0, fill: false },
-    { label: 'Network revenue (0.5%)', data: netRevs, borderColor: '#7B3FBF', borderWidth: 2, borderDash: [5,3], pointRadius: 0, fill: false }
+    { label: 'Network revenue (0.5%)', data: netRevs, borderColor: '#7B3FBF', borderWidth: 2, pointRadius: 0, fill: false }
   ];
   cEmission.update('none');
 
