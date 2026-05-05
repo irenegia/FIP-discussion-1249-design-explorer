@@ -82,10 +82,10 @@
 <div class="ctrl-row">
   <span class="ctrl-label">Revenue growth model</span>
   <select id="revMode" style="font-size:13px; padding:3px 6px; border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text); cursor:pointer;">
-    <option value="decel" selected>Decaying growth</option>
-    <option value="scurve">Peak-and-settle</option>
+    <option value="decel">Decaying growth</option>
+    <option value="scurve" selected>Peak-and-settle</option>
   </select>
-  <span class="ctrl-val" id="revMode-out" style="min-width:auto; font-weight:400; color:var(--text2); font-size:12px;">slow start → acceleration → plateau</span>
+  <span class="ctrl-val" id="revMode-out" style="min-width:auto; font-weight:400; color:var(--text2); font-size:12px;">starts at slider, peaks ~Q4, settles to floor rate</span>
 </div>
 <div class="ctrl-row">
   <span class="ctrl-label">Starting quarterly deal revenue</span>
@@ -113,8 +113,8 @@
 <p style="margin:0.5rem 0 0.25rem;"><b>Starting quarterly deal revenue</b> (R<sub>0</sub>) is the Q1 value &mdash; total $ value of paid storage deals on-chain (FOC market). <b>Growth rate</b> (g) compounds it forward across 16 quarters using one of two models:</p>
 <p style="margin:0.25rem 0 0;"><b>Decaying growth:</b> <code>R(i) = R(i&minus;1) &times; (1 + g<sub>i</sub>)</code> where <code>g<sub>i</sub> = floor + (g &minus; floor) &times; e<sup>&minus;0.45(i&minus;1)</sup></code><br>
 <span style="color:var(--text2);">Growth rate starts at g (slider value) in Q2, decays exponentially toward the floor rate steady state.</span></p>
-<p style="margin:0.25rem 0 0;"><b>S-curve:</b> <code>R(i) = R(i&minus;1) &times; (1 + g<sub>i</sub>)</code> where <code>g<sub>i</sub> = floor + (g &minus; floor) &times; e<sup>&minus;(i&minus;mid)&sup2;/2&sigma;&sup2;</sup></code><br>
-<span style="color:var(--text2);">Growth rate follows a bell curve: starts at floor, peaks at g around Q8, settles back to floor. Produces an S-shaped revenue curve.</span></p>
+<p style="margin:0.25rem 0 0;"><b>Peak-and-settle:</b> <code>R(i) = R(i&minus;1) &times; (1 + g<sub>i</sub>)</code>, gamma-shaped growth rate normalised so g<sub>1</sub> = g (slider value)<br>
+<span style="color:var(--text2);">Starts at g, ramps up over 2&ndash;3 quarters (peak ~Q4), then steep decay to floor by ~Q13. As revenue gets large, growth rate drops fast.</span></p>
 <p style="margin:0.25rem 0 0;">Block reward: 63,727 FIL/day (Apr 2026, via Filfox) with 6-year half-life decay. BR<sub>q</sub> = start-of-quarter daily rate &times; 90 days &times; FIL price (~1.4% overestimate vs exact integration).</p>
 <p style="margin:0.25rem 0 0;"><b>Note:</b> This model only applies simple minting decay to BR<sub>q</sub>. It does not account for baseline minting, which depends on network QAP vs the baseline power function. Currently baseline contributes ~14% of daily emission because QAP is well below baseline. If QAP were to grow, baseline minting would increase BR<sub>q</sub> beyond what this model projects, raising the gate target.</p>
 </details>
@@ -152,7 +152,7 @@
   <span class="ctrl-val" id="stepSize-out">5 pp</span>
 </div>
 
-<!-- ── Charts: beta curve (left) + alpha comparison (right) ── -->
+<!-- ── Charts: gate multiplier (left) + growth rate (right) ── -->
 <hr class="divider" />
 
 <div class="charts-row">
@@ -167,16 +167,22 @@
     <div class="chart-wrap"><canvas id="chartBeta"></canvas></div>
   </div>
   <div>
-    <h2>Alpha trajectory comparison</h2>
+    <h2>Growth rate per quarter</h2>
     <div class="legend-row">
-      <span class="legend-item"><span class="legend-dot" style="background:#D85A30;"></span>Opt 1: step-up (quarterly)</span>
-      <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>Opt 2: continuous (weekly)</span>
-      <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>Deal revenue</span>
       <span class="legend-item"><span class="legend-dot" style="background:#555555;"></span>Growth %/q</span>
     </div>
-    <div class="chart-wrap"><canvas id="chartAlpha"></canvas></div>
+    <div class="chart-wrap"><canvas id="chartGrowth"></canvas></div>
   </div>
 </div>
+
+<hr class="divider" />
+<h2>Alpha trajectory comparison</h2>
+<div class="legend-row">
+  <span class="legend-item"><span class="legend-dot" style="background:#D85A30;"></span>Opt 1: step-up (quarterly)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>Opt 2: continuous (weekly)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>Deal revenue</span>
+</div>
+<div class="chart-wrap"><canvas id="chartAlpha"></canvas></div>
 
 <hr class="divider" />
 <h2>Emission vs Revenue</h2>
@@ -208,11 +214,11 @@ const DAYS_PER_Q = 90;
 const DECAY_PER_Q = Math.pow(0.5, DAYS_PER_Q / HALF_LIFE_DAYS);
 
 const MODE_DESC = {
-  decel:  'fast start, decays toward floor rate',
-  scurve: 'growth peaks at midpoint, settles to floor rate'
+  decel:  'starts high, decays toward floor rate',
+  scurve: 'starts at slider, peaks ~Q4, settles to floor rate'
 };
 
-const GROWTH_LABEL = { decel: 'Initial growth rate / quarter', scurve: 'Peak growth rate / quarter' };
+const GROWTH_LABEL = { decel: 'Initial growth rate / quarter', scurve: 'Initial growth rate / quarter' };
 el('revMode').addEventListener('change', function() {
   el('revMode-out').textContent = MODE_DESC[this.value];
   el('revGrowthLabel').textContent = GROWTH_LABEL[this.value];
@@ -228,17 +234,19 @@ function generateRevenue(revNow, revGrowth, mode, growthFloor) {
       // g(i) = floor + (revGrowth - floor) × e^(-0.45 × (i-1))
       if (i === 0) { r = revNow; }
       else {
-        const g = growthFloor + (revGrowth - growthFloor) * Math.exp(-0.45 * (i - 1));
+        const g = Math.max(growthFloor, growthFloor + (revGrowth - growthFloor) * Math.exp(-0.45 * (i - 1)));
         r = revs[i-1] * (1 + g);
       }
     } else {
-      // S-curve: growth rate follows a bell curve — starts at floor, peaks at g around midpoint, settles back to floor
-      // g(i) = floor + (g - floor) × exp(-((i - mid)^2) / (2 × σ^2))
+      // Peak-and-settle: starts at g (slider), ramps up for 2-3q, then steep decay to floor
+      // shape(i) = (i/p)^2 × e^(2(1-i/p)) / shape(1),  p = 3 (peak ~Q4)
       if (i === 0) { r = revNow; }
       else {
-        const mid = QUARTERS / 2;
-        const sigma = QUARTERS / 4;
-        const g = growthFloor + (revGrowth - growthFloor) * Math.exp(-Math.pow(i - mid, 2) / (2 * sigma * sigma));
+        const p = 3;
+        const raw = Math.pow(i / p, 2) * Math.exp(2 * (1 - i / p));
+        const raw1 = Math.pow(1 / p, 2) * Math.exp(2 * (1 - 1 / p)); // normalise so shape(1) = 1
+        const shape = raw / raw1;
+        const g = Math.max(growthFloor, growthFloor + (revGrowth - growthFloor) * shape);
         r = revs[i-1] * (1 + g);
       }
     }
@@ -308,12 +316,11 @@ function calcStepUp(revs, qBRs, aMax, k, betaStart, betaMax) {
   return { alphas, gates, passed };
 }
 
-// Option 1B: quarterly, proportional
 // Option 2: weekly evaluation with 13-week rolling window
 // We simulate weekly but plot quarterly snapshots (every 13 weeks)
 function calcContinuous(revs, qBRs, aMax, k, betaStart, betaMax) {
-  const ALPHA_START = 5;
   const stepSize = parseFloat(el('stepSize').value);
+  const ALPHA_START = stepSize;
   const WEEKS_PER_Q = 13;
   const weeklyStep = stepSize / WEEKS_PER_Q;
   const totalWeeks = QUARTERS * WEEKS_PER_Q;
@@ -367,8 +374,7 @@ const co = (yL) => ({
   scales: {
     x: { grid: { color: gc }, ticks: { color: tc, font: { size: 10 } } },
     y: { position: 'left', title: { display: true, text: yL, color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => v+'%' }, min: 0 },
-    y2: { position: 'right', title: { display: true, text: 'Deal revenue', color: tc, font: { size: 11 } }, grid: { drawOnChartArea: false }, ticks: { color: tc, font: { size: 10 }, callback: v => fmtRevenue(v) }, min: 0 },
-    y3: { position: 'right', display: false, grid: { drawOnChartArea: false }, min: 0 }
+    y2: { position: 'right', title: { display: true, text: 'Deal revenue', color: tc, font: { size: 11 } }, grid: { drawOnChartArea: false }, ticks: { color: tc, font: { size: 10 }, callback: v => fmtRevenue(v) }, min: 0 }
   },
   plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } }
 });
@@ -391,10 +397,20 @@ const emissionChartOpts = {
   plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtRevenue(ctx.parsed.y) } } }
 };
 
-let cAlpha, cBeta, cEmission;
+const growthChartOpts = {
+  responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
+  scales: {
+    x: { grid: { color: gc }, ticks: { color: tc, font: { size: 10 } } },
+    y: { position: 'left', title: { display: true, text: 'Growth %/q', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => v+'%' }, min: 0 }
+  },
+  plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) + '%' : '' } } }
+};
+
+let cAlpha, cBeta, cGrowth, cEmission;
 function initCharts() {
   cAlpha = new Chart(el('chartAlpha'), { type: 'line', data: { labels: qLabels, datasets: [] }, options: co('Alpha (%)') });
   cBeta = new Chart(el('chartBeta'), { type: 'line', data: { datasets: [] }, options: betaChartOpts });
+  cGrowth = new Chart(el('chartGrowth'), { type: 'line', data: { labels: qLabels, datasets: [] }, options: growthChartOpts });
   cEmission = new Chart(el('chartEmission'), { type: 'line', data: { labels: qLabels, datasets: [] }, options: emissionChartOpts });
 }
 
@@ -431,23 +447,22 @@ function updateAll() {
   const { revs, qBRs, aMax, k, betaStart, betaMax } = getShared();
   const s = calcStepUp(revs, qBRs, aMax, k, betaStart, betaMax);
   const c = calcContinuous(revs, qBRs, aMax, k, betaStart, betaMax);
-  const maxRev = Math.max(...revs, ...s.gates) * 1.2;
-
-  // Growth rate per quarter (%)
-  const growthPcts = revs.map((r, i) => i === 0 ? null : ((r - revs[i-1]) / revs[i-1]) * 100);
-
   // Combined alpha chart
   cAlpha.data.datasets = [
     { label:'Opt 1: step-up', data:s.alphas, borderColor:'#D85A30', borderWidth:2.5, pointRadius:0, yAxisID:'y', order:1, fill:false, stepped:'after' },
     { label:'Opt 2: continuous', data:c.alphas, borderColor:'#378ADD', borderWidth:2.5, pointRadius:0, yAxisID:'y', order:1, fill:false, tension:0.3 },
-    { label:'Deal revenue', data:revs, borderColor:'#1D9E75', borderWidth:1.5, borderDash:[5,3], pointRadius:0, yAxisID:'y2', order:2, fill:false },
-    { label:'Growth %/q', data:growthPcts, borderColor:'#555555', borderWidth:1.5, borderDash:[3,2], pointRadius:2, yAxisID:'y3', order:3, fill:false, tension:0.3, spanGaps:true }
+    { label:'Deal revenue', data:revs, borderColor:'#1D9E75', borderWidth:1.5, borderDash:[5,3], pointRadius:0, yAxisID:'y2', order:2, fill:false }
   ];
   cAlpha.options.scales.y.max = aMax+5;
   cAlpha.options.scales.y2.max = Math.max(...revs) * 1.1;
-  const maxGrowth = Math.max(...growthPcts.filter(v => v !== null));
-  cAlpha.options.scales.y3.max = Math.ceil(maxGrowth / 10) * 10;
   cAlpha.update('none');
+
+  // Growth rate chart
+  const growthPcts = revs.map((r, i) => i === 0 ? null : ((r - revs[i-1]) / revs[i-1]) * 100);
+  cGrowth.data.datasets = [
+    { label:'Growth %/q', data:growthPcts, borderColor:'#555555', borderWidth:2, pointRadius:3, fill:false, tension:0.3, spanGaps:true }
+  ];
+  cGrowth.update('none');
 
   buildTable(revs, s);
   buildRevProjection(revs);
