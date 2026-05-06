@@ -84,6 +84,7 @@
   <select id="revMode" style="font-size:13px; padding:3px 6px; border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text); cursor:pointer;">
     <option value="decel">Decaying growth</option>
     <option value="scurve" selected>Peak-and-settle</option>
+    <option value="wasabi">Wasabi benchmark</option>
   </select>
   <span class="ctrl-val" id="revMode-out" style="min-width:auto; font-weight:400; color:var(--text2); font-size:12px;">starts at slider, peaks ~Q4, settles to floor rate</span>
 </div>
@@ -115,6 +116,8 @@
 <span style="color:var(--text2);">Growth rate starts at g (slider value) in Q2, decays exponentially toward the floor rate steady state.</span></p>
 <p style="margin:0.25rem 0 0;"><b>Peak-and-settle:</b> <code>R(i) = R(i&minus;1) &times; (1 + g<sub>i</sub>)</code>, gamma-shaped growth rate normalised so g<sub>1</sub> = g (slider value)<br>
 <span style="color:var(--text2);">Starts at g, ramps up over 2&ndash;3 quarters (peak ~Q4), then steep decay to floor by ~Q13. As revenue gets large, growth rate drops fast.</span></p>
+<p style="margin:0.25rem 0 0;"><b>Wasabi benchmark:</b> Implied QoQ growth rates derived from Wasabi Technologies (cloud storage, founded 2017). Verified annual revenue: $18M&rarr;$54M&rarr;$92.5M&rarr;$134.7M&rarr;$160.1M (2020&ndash;2024). Sources: getlatka.com, blocksandfiles.com, wasabi.com press releases.<br>
+<span style="color:var(--text2);">Each year&rsquo;s QoQ = (end/start)<sup>1/4</sup>&minus;1, held constant across 4 quarters: 32%/q &rarr; 14%/q &rarr; 10%/q &rarr; 4%/q. Growth rate and floor rate sliders are ignored. Starting deal revenue slider still sets R<sub>0</sub> (Wasabi&rsquo;s absolute $ figures don&rsquo;t apply to Filecoin &mdash; only the growth shape is borrowed).</span></p>
 <p style="margin:0.25rem 0 0;">Block reward: 63,727 FIL/day (Apr 2026, via Filfox) with 6-year half-life decay. BR<sub>q</sub> = start-of-quarter daily rate &times; 90 days &times; FIL price (~1.4% overestimate vs exact integration).</p>
 <p style="margin:0.25rem 0 0;"><b>Note:</b> This model only applies simple minting decay to BR<sub>q</sub>. It does not account for baseline minting, which depends on network QAP vs the baseline power function. Currently baseline contributes ~14% of daily emission because QAP is well below baseline. If QAP were to grow, baseline minting would increase BR<sub>q</sub> beyond what this model projects, raising the gate target.</p>
 </details>
@@ -214,21 +217,32 @@ const DECAY_PER_Q = Math.pow(0.5, DAYS_PER_Q / HALF_LIFE_DAYS);
 
 const MODE_DESC = {
   decel:  'starts high, decays toward floor rate',
-  scurve: 'starts at slider, peaks ~Q4, settles to floor rate'
+  scurve: 'starts at slider, peaks ~Q4, settles to floor rate',
+  wasabi: 'verified Wasabi revenue 2020–2024: 32→14→10→4 %/q, sliders ignored'
 };
 
-const GROWTH_LABEL = { decel: 'Initial growth rate / quarter', scurve: 'Initial growth rate / quarter' };
+const GROWTH_LABEL = { decel: 'Initial growth rate / quarter', scurve: 'Initial growth rate / quarter', wasabi: '(not used — fixed rates)' };
 el('revMode').addEventListener('change', function() {
   el('revMode-out').textContent = MODE_DESC[this.value];
   el('revGrowthLabel').textContent = GROWTH_LABEL[this.value];
   updateAll();
 });
 
+// Wasabi Technologies implied QoQ growth rates (2021–2024)
+// Derived from verified annual revenue: $18M (2020) → $54M (2021) → $92.5M (2022) → $134.7M (2023) → $160.1M (2024)
+// Sources: getlatka.com/companies/wasabi, blocksandfiles.com, wasabi.com press releases
+// Each year's QoQ = (end/start)^(1/4) − 1, held constant across 4 quarters
+// Yr1 32%/q (200% YoY) → Yr2 14%/q (71% YoY) → Yr3 10%/q (46% YoY) → Yr4 4%/q (19% YoY)
+const WASABI_QOQ = [0.32, 0.32, 0.32, 0.32, 0.14, 0.14, 0.14, 0.14, 0.10, 0.10, 0.10, 0.10, 0.04, 0.04, 0.04, 0.04];
+
 function generateRevenue(revNow, revGrowth, mode, growthFloor) {
   const revs = [];
   for (let i = 0; i < QUARTERS; i++) {
     let r;
-    if (mode === 'decel') {
+    if (mode === 'wasabi') {
+      if (i === 0) { r = revNow; }
+      else { r = revs[i-1] * (1 + WASABI_QOQ[i-1]); }
+    } else if (mode === 'decel') {
       // Decaying growth: rate starts at g, decays exponentially toward floor
       // g(i) = floor + (revGrowth - floor) × e^(-0.45 × (i-1))
       if (i === 0) { r = revNow; }
