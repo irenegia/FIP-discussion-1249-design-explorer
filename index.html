@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIP-1249 Design Explorer</title>
+<style>
+  :root { --bg: #FAFAF8; --text: #2C2C2C; --text2: #666; --border: #E0DDD5; --accent: #D85A30; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1A1A18; --text: #E0DDD5; --text2: #999; --border: #3A3A35; --accent: #E8764A; }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+  .container { max-width: 640px; width: 100%; }
+  h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .subtitle { color: var(--text2); font-size: 0.95rem; margin-bottom: 2rem; }
+  .card { display: block; border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; text-decoration: none; color: var(--text); transition: border-color 0.15s, box-shadow 0.15s; }
+  .card:hover { border-color: var(--accent); box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .card h2 { font-size: 1.15rem; font-weight: 600; margin-bottom: 0.4rem; }
+  .card .tag { display: inline-block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 4px; margin-bottom: 0.5rem; }
+  .tag-new { background: rgba(29,158,117,0.12); color: #1D9E75; }
+  .tag-prev { background: rgba(0,0,0,0.06); color: var(--text2); }
+  .card p { color: var(--text2); font-size: 0.88rem; line-height: 1.5; }
+  .footer { margin-top: 2rem; font-size: 0.8rem; color: var(--text2); text-align: center; }
+  .footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>FIP-1249 Design Explorer</h1>
+  <p class="subtitle">Block reward disposition mechanism for Filecoin FIL+ Evolution</p>
+
+  <a class="card" href="alpha-omega-explorer.html">
+    <span class="tag tag-new">Current proposal</span>
+    <h2>Alpha / Omega explorer</h2>
+    <p>&alpha; (revenue-gated quarterly step-up) + &omega; (time-based consensus reduction) + burn (&omega; &minus; &alpha;). Single mechanism with three outcome scenarios.</p>
+  </a>
+
+  <a class="card" href="scenario-explorer.html">
+    <span class="tag tag-prev">Previous version</span>
+    <h2>Option 1 vs Option 2 explorer</h2>
+    <p>Original design comparing quarterly step-up (Option 1) vs continuous weekly evaluation (Option 2). Revenue-gated alpha only, no omega or burn mechanism.</p>
+  </a>
+
+  <div class="footer">
+    Part of <a href="https://github.com/filecoin-project/FIPs/discussions/1249" target="_blank">FIP discussion #1249</a>
+  </div>
+</div>
+</body>
+</html>
