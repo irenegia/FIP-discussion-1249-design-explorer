@@ -1,0 +1,16 @@
+# FIP-1249 Design Explorer
+
+Interactive explorers supporting the design options for the FIL+ block reward disposition mechanism.
+
+**Live site:** https://irenegia.github.io/FIP-discussion-1249-design-explorer/
+
+## What's here
+
+- **Alpha / Omega explorer** — current proposal: α (revenue-gated) + ω (time-based consensus reduction) + burn (ω − α)
+- **Option 1 vs Option 2 explorer** — previous design comparing quarterly step-up vs continuous weekly evaluation
+
+## Context
+
+This repo contains working material for [FIP discussion #1249](https://github.com/filecoin-project/FIPs/discussions/1249).
+
+More details in the [design doc](https://docs.google.com/document/d/1WWlIpBnjSxNjxTLP5_ykzMHR9QTiC-foOx_cmJkXdnQ/edit?tab=t.prz3fnitxp5d) (private — ping me to request access).
