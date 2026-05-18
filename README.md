@@ -6,8 +6,8 @@ Interactive explorers supporting the design options for the FIL+ block reward di
 
 ## What's here
 
-- **Alpha / Omega explorer** — current proposal: α (revenue-gated) + ω (time-based consensus reduction) + burn (ω − α)
-- **Option 1 vs Option 2 explorer** — previous design comparing quarterly step-up vs continuous weekly evaluation
+- **BR-split with gated allocation explorer** — current proposal:  α (continuous ramp, service budget) + αfloor (revenue-gated allocation) + burn (α − αfloor)" canghe Alpha with gated allocations
+- **Alpha explorer** — comparing quarterly step-up vs continuous weekly evaluation
 
 ## Context
 
