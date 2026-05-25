@@ -91,7 +91,7 @@
   </div>
 
   <div style="margin-top:0.75rem; font-size:12px;">
-    More info: <a href="https://docs.google.com/document/d/1WWlIpBnjSxNjxTLP5_ykzMHR9QTiC-foOx_cmJkXdnQ/edit?tab=t.prz3fnitxp5d" target="_blank" style="color:#378ADD;">FIL+ Reform Design Doc</a>
+    More info: <a href="https://docs.google.com/document/d/1WWlIpBnjSxNjxTLP5_ykzMHR9QTiC-foOx_cmJkXdnQ/edit?tab=t.hqep0n7h48xs" target="_blank" style="color:#378ADD;">FIL+ Reform &ndash; Alpha Ramp-Up Design Doc</a>
   </div>
 </div>
 
@@ -101,6 +101,12 @@
   <strong>Step 1:</strong> Choose a revenue growth model below. Deal revenue = total $ value of paid storage deals (not the 0.5% network fee). Adjust the starting revenue, growth rate, and FIL price to match your assumptions.<br>
   <strong>Step 2:</strong> Tune the gate parameters (&beta; start, &beta; max, k shape) to see how they affect &alpha;<sub>floor</sub> progression and burn. The &alpha; ramp (5% &rarr; 50% over 9Q) and &alpha;<sub>floor</sub> step size (5 pp) are fixed.<br>
   <strong>Step 3:</strong> Check the simulated outputs below &mdash; the quarterly scenario table and charts update live as you move the sliders.
+</div>
+
+<!-- ── BR overestimate warning ── -->
+<div style="margin-top: 0.75rem; padding: 0.7rem 1rem; background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; font-size: 12.5px; color: #5d4037;">
+  <strong style="color:#e65100;">&#9888; Block-reward overestimate:</strong>
+  This model applies simple-minting decay (6-year half-life) to the <em>entire</em> block reward. In reality, ~14% of current emission comes from baseline minting, which decays much faster when QAP declines (currently &minus;30&nbsp;PiB/day). Result: <strong>the model overestimates BR<sub>q</sub> by roughly +1% in Q1, growing to ~+14.5% by Q16</strong> (average &asymp; +9% over 16&nbsp;quarters). This makes the revenue gate <em>harder</em> to clear than it would be in practice &mdash; a conservative/pessimistic bias. Keep this in mind when interpreting near-pass or near-fail scenarios in later quarters.
 </div>
 
 <!-- ── Inputs box (Steps 1 & 2) ── -->
@@ -118,6 +124,7 @@
     <option value="decel">Decaying growth</option>
     <option value="scurve" selected>Peak-and-settle</option>
     <option value="wasabi">Wasabi benchmark</option>
+    <option value="custom">Custom (per-quarter)</option>
   </select>
   <span class="ctrl-val" id="revMode-out" style="min-width:auto; font-weight:400; color:var(--text2); font-size:12px;">starts at slider, peaks ~Q4, settles to long-term rate</span>
 </div>
@@ -135,6 +142,25 @@
   <span class="ctrl-label">Long-term growth rate</span>
   <input type="range" min="0" max="30" value="10" step="1" id="growthFloor" />
   <span class="ctrl-val" id="growthFloor-out">10%</span>
+</div>
+<div id="customGrowthBox" style="display:none; margin:0.25rem 0 0.5rem; padding:0.6rem 0.75rem; background:var(--bg2); border-radius:6px;">
+  <div style="font-size:12px; color:var(--text2); margin-bottom:0.4rem;">QoQ growth rate for each quarter (%):</div>
+  <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font-size:11px;">
+    <div style="text-align:center;"><label style="color:var(--text2);">Q3</label><br><input type="number" class="cg-input" data-qi="2" value="10" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q4</label><br><input type="number" class="cg-input" data-qi="3" value="15" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q5</label><br><input type="number" class="cg-input" data-qi="4" value="30" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q6</label><br><input type="number" class="cg-input" data-qi="5" value="60" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q7</label><br><input type="number" class="cg-input" data-qi="6" value="120" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q8</label><br><input type="number" class="cg-input" data-qi="7" value="180" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q9</label><br><input type="number" class="cg-input" data-qi="8" value="200" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q10</label><br><input type="number" class="cg-input" data-qi="9" value="200" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q11</label><br><input type="number" class="cg-input" data-qi="10" value="180" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q12</label><br><input type="number" class="cg-input" data-qi="11" value="120" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q13</label><br><input type="number" class="cg-input" data-qi="12" value="60" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q14</label><br><input type="number" class="cg-input" data-qi="13" value="30" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q15</label><br><input type="number" class="cg-input" data-qi="14" value="20" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q16</label><br><input type="number" class="cg-input" data-qi="15" value="20" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+  </div>
 </div>
 <div class="ctrl-row">
   <span class="ctrl-label">FIL price (USD)</span>
@@ -155,6 +181,7 @@
 <span style="color:var(--text2);">Growth rate starts at g (slider value) in Q2, decays exponentially toward the long-term rate steady state.</span></p>
 <p style="margin:0.25rem 0 0;"><b>Peak-and-settle:</b> <code>R(i) = R(i&minus;1) &times; (1 + g<sub>i</sub>)</code>, gamma-shaped growth rate normalised so g<sub>1</sub> = g (slider value)<br>
 <span style="color:var(--text2);">Starts at g, ramps up over 2&ndash;3 quarters (peak ~Q4), then steep decay to floor by ~Q13. As revenue gets large, growth rate drops fast.</span></p>
+<p style="margin:0.25rem 0 0;"><b>Custom (per-quarter):</b> You set the QoQ growth rate individually for each quarter from Q3 to Q16. The Q2 starting revenue slider sets R<sub>Q2</sub>; after that, each quarter compounds at the rate you type in. Growth rate and long-term rate sliders are replaced by the per-quarter inputs.</p>
 <p style="margin:0.25rem 0 0;"><b>Wasabi benchmark:</b> Implied QoQ growth rates derived from Wasabi Technologies (cloud storage, founded 2017). Verified annual revenue: $18M&rarr;$54M&rarr;$92.5M&rarr;$134.7M&rarr;$160.1M (2020&ndash;2024). Sources: getlatka.com, blocksandfiles.com, wasabi.com press releases.<br>
 <span style="color:var(--text2);">Each year&rsquo;s QoQ = (end/start)<sup>1/4</sup>&minus;1, held constant across 4 quarters: 32%/q &rarr; 14%/q &rarr; 10%/q &rarr; 4%/q. Growth rate and long-term rate sliders are ignored. Starting deal revenue slider still sets R<sub>0</sub> (Wasabi&rsquo;s absolute $ figures don&rsquo;t apply to Filecoin &mdash; only the growth shape is borrowed).</span></p>
 <p style="margin:0.25rem 0 0;">Block reward: 63,727 FIL/day (Apr 2026, via Filfox) with 6-year half-life decay. BR<sub>q</sub> = start-of-quarter daily rate &times; 90 days &times; FIL price (~1.4% overestimate vs exact integration).</p>
@@ -248,13 +275,18 @@ const STEP_SIZE = 5;          // α_floor step size: 5 pp
 const MODE_DESC = {
   decel:  'starts high, decays toward long-term rate',
   scurve: 'starts at slider, peaks ~Q4, settles to long-term rate',
-  wasabi: 'verified Wasabi revenue 2020–2024: 32→14→10→4 %/q, sliders ignored'
+  wasabi: 'verified Wasabi revenue 2020–2024: 32→14→10→4 %/q, sliders ignored',
+  custom: 'you set the growth rate for each quarter individually'
 };
 
-const GROWTH_LABEL = { decel: 'Growth rate Q2→Q3', scurve: 'Growth rate Q2→Q3', wasabi: '(not used — fixed rates)' };
+const GROWTH_LABEL = { decel: 'Growth rate Q2→Q3', scurve: 'Growth rate Q2→Q3', wasabi: '(not used — fixed rates)', custom: '(set per quarter below)' };
 el('revMode').addEventListener('change', function() {
   el('revMode-out').textContent = MODE_DESC[this.value];
   el('revGrowthLabel').textContent = GROWTH_LABEL[this.value];
+  const isCustom = this.value === 'custom';
+  el('customGrowthBox').style.display = isCustom ? 'block' : 'none';
+  el('revGrowth').parentElement.style.display = isCustom ? 'none' : '';
+  el('growthFloor').parentElement.style.display = isCustom ? 'none' : '';
   updateAll();
 });
 
@@ -269,6 +301,11 @@ function generateRevenue(revQ2, revGrowth, mode, growthFloor) {
     let r;
     if (i === 1) {
       r = revQ2; // Q2 = slider value
+    } else if (mode === 'custom') {
+      const customInputs = document.querySelectorAll('.cg-input');
+      const gIdx = i - 2; // Q3 → index 0, Q4 → index 1, ...
+      const g = gIdx < customInputs.length ? parseFloat(customInputs[gIdx].value) / 100 : 0;
+      r = revs[i-1] * (1 + (isNaN(g) ? 0 : g));
     } else if (mode === 'wasabi') {
       r = revs[i-1] * (1 + WASABI_QOQ[i-2]); // offset by 1 since we start growth from Q2
     } else if (mode === 'decel') {
@@ -363,6 +400,11 @@ function calcAlphaFloor(revs, qBRs, alphas, aMax, k, betaStart, betaMax) {
       gates.push(0);
       betas.push(0);
       passed.push(true); // ungated
+    } else if (currentFloor >= alphas[i]) {
+      // α_floor already at cap — no gate, no β
+      betas.push(null);
+      gates.push(null);
+      passed.push(null); // null = n/a (capped)
     } else {
       // Gate check at end of quarter: DealRevenue(Q) ≥ β × Allocation(Q-1)
       const prevAlloc = allocations[i - 1];
@@ -372,11 +414,8 @@ function calcAlphaFloor(revs, qBRs, alphas, aMax, k, betaStart, betaMax) {
       betas.push(beta);
       gates.push(gate);
 
-      if (revs[i] >= gate && gate >= 0 && currentFloor < alphas[i]) {
+      if (revs[i] >= gate && gate >= 0) {
         currentFloor = Math.min(currentFloor + stepSize, alphas[i]); // can't exceed current α
-        passed.push(true);
-      } else if (currentFloor >= alphas[i]) {
-        // α_floor already at α, no step needed
         passed.push(true);
       } else {
         passed.push(false);
@@ -484,20 +523,28 @@ function buildMainTable(revs, qBRs, alphas, f) {
       growthLabel = (pct >= 100 ? pct.toFixed(0) : pct.toFixed(1)) + '%';
     }
     // Gate columns
-    let gateLabel, passLabel, passClass;
+    let gateLabel, passLabel, passClass, betaLabel;
+    const dash = '<span style="color:var(--text2)">&mdash;</span>';
     if (i === 0) {
-      gateLabel = '<span style="color:var(--text2)">&mdash;</span>';
+      gateLabel = dash;
       passLabel = '<span style="color:var(--text2)">bootstrap</span>';
       passClass = '';
+      betaLabel = dash;
+    } else if (passed[i] === null) {
+      // α_floor at cap — no gate applies
+      gateLabel = dash;
+      passLabel = '<span style="color:var(--text2)">capped</span>';
+      passClass = '';
+      betaLabel = dash;
     } else {
       gateLabel = fmtRevenue(gates[i]);
       passLabel = passed[i] ? 'Yes' : 'No';
       passClass = passed[i] ? 'pass' : 'fail';
+      betaLabel = betas[i].toFixed(2) + 'x';
     }
-    const revLabel = i === 0 ? '<span style="color:var(--text2)">&mdash;</span>' : fmtRevenue(revs[i]);
-    const prevAllocLabel = i === 0 ? '<span style="color:var(--text2)">&mdash;</span>' : fmtRevenue(allocations[i-1]);
-    const arrLabel = i === 0 ? '<span style="color:var(--text2)">&mdash;</span>' : fmtRevenue(revs[i] * 4);
-    const betaLabel = i === 0 ? '<span style="color:var(--text2)">&mdash;</span>' : betas[i].toFixed(2) + 'x';
+    const revLabel = i === 0 ? dash : fmtRevenue(revs[i]);
+    const prevAllocLabel = i === 0 ? dash : fmtRevenue(allocations[i-1]);
+    const arrLabel = i === 0 ? dash : fmtRevenue(revs[i] * 4);
     h += '<tr><td>Q'+(i+1)+'</td><td>'+revLabel+'</td><td>'+arrLabel+'</td><td>'+growthLabel+'</td><td>'+gateLabel+'</td><td>'+prevAllocLabel+'</td><td class="'+passClass+'">'+passLabel+'</td><td>'+alphas[i].toFixed(1)+'%</td><td>'+alphaFloors[i].toFixed(1)+'%</td><td style="color:'+(burn>0.05?'#E44B4B':'var(--text2)')+'">'+burn.toFixed(1)+'%</td><td>'+betaLabel+'</td></tr>';
   }
   h += '</table>';
@@ -531,7 +578,7 @@ function updateAll() {
   // Quarterly flows chart
   const serviceBudget = alphas.map((a, i) => a / 100 * qBRs[i]);
   const burnDollars = alphas.map((a, i) => Math.max(0, a - f.alphaFloors[i]) / 100 * qBRs[i]);
-  const gateTarget = f.gates.map((g, i) => i === 0 ? 0 : g);
+  const gateTarget = f.gates.map((g, i) => (i === 0 || g === null) ? null : g);
   cEmission.data.datasets = [
     { label: 'Block reward', data: qBRs, borderColor: '#1a1a1a', borderWidth: 2.5, pointRadius: 0, fill: false },
     { label: 'Service budget (α×BR_q)', data: serviceBudget, borderColor: '#378ADD', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 },
@@ -562,6 +609,11 @@ function updateAll() {
 initCharts();
 updateAll();
 ['revNowLog','revGrowth','growthFloor','filPrice','kParam','betaStart','betaMax'].forEach(id => el(id).addEventListener('input', updateAll));
+document.querySelectorAll('.cg-input').forEach(inp => inp.addEventListener('input', updateAll));
 </script>
+
+<footer style="margin-top: 2rem; padding: 1rem 0; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: var(--text2);">
+  Last updated: 2026-05-25
+</footer>
 </body>
 </html>
