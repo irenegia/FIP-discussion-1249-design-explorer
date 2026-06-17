@@ -29,16 +29,22 @@
   <h1>FIP-1249 Design Explorer</h1>
   <p class="subtitle">Block reward disposition mechanism for Filecoin FIL+ Evolution</p>
 
-  <a class="card" href="alpha-alphafloor-explorer.html">
+  <a class="card" href="subnet-weights-explorer.html">
     <span class="tag tag-new">Current proposal</span>
-    <h2>Alpha with gated allocations explorer</h2>
-    <p>At each epoch, a fraction α (alpha) of the block reward is reallocated from consensus reward and deposited in the new FEVM actor, creating the service budget. Of that, a fraction α_floor goes to the Service Orchestrator (the allocation), and the remainder (α − α_floor) is burned.</p>
+    <h2>Block-reward split — subnet weights</h2>
+    <p>Consensus weight w0 (= 1&minus;&alpha;), revenue-gated service weight w1 (= &alpha;<sub>floor</sub>), and burn wb = 1 &minus; &sum; w<sub>i</sub>. Power-law or exponential &beta; gate, live FIL price, full 16-quarter scenario.</p>
+  </a>
+
+  <a class="card card-shaded" href="alpha-omega-explorer.html">
+    <span class="tag tag-prev">Earlier framing</span>
+    <h2>Alpha / Omega explorer</h2>
+    <p>The same mechanism in &alpha;/&omega; notation: &alpha; (revenue-gated quarterly step-up) + &omega; (time-based consensus reduction) + burn (&omega; &minus; &alpha;).</p>
   </a>
 
   <a class="card card-shaded" href="scenario-explorer.html">
     <span class="tag tag-prev">Archived</span>
-    <h2> Alpha explorer</h2>
-    <p>Original design comparing quarterly step-up (Option 1) vs continuous weekly evaluation (Option 2). Revenue-gated alpha only, no burn mechanism.</p>
+    <h2>Option 1 vs Option 2 explorer</h2>
+    <p>Original design comparing quarterly step-up (Option 1) vs continuous weekly evaluation (Option 2). Revenue-gated alpha only, no omega or burn mechanism.</p>
   </a>
 
   <div class="footer">
