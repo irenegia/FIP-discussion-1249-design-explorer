@@ -6,8 +6,8 @@ Interactive explorers supporting the design options for the FIL+ block reward di
 
 ## What's here
 
-- **BR-split with gated allocation explorer** — current proposal:  α (continuous ramp, service budget) + αfloor (revenue-gated allocation) + burn (α − αfloor)
-- **Alpha explorer** — comparing quarterly step-up vs continuous weekly evaluation
+- **BR-split with gated allocation explorer** — comparing parameters for the gate
+- **Ramp explorer** — comparing quarterly step-up vs continuous weekly evaluation
 
 ## Context
 
