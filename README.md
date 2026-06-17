@@ -6,8 +6,9 @@ Interactive explorers supporting the design options for the FIL+ block reward di
 
 ## What's here
 
-- **BR-split with gated allocation explorer** — comparing parameters for the gate
-- **Ramp explorer** — comparing quarterly step-up vs continuous weekly evaluation
+- **Block-reward split (subnet weights)** — current proposal: consensus weight w0 (= 1−α), revenue-gated service weight w1 (= α_floor), and burn wb = 1 − Σ wᵢ. Power-law or exponential β gate, live FIL price, full 16-quarter scenario.
+- **Alpha / Omega explorer** — the same mechanism in earlier α/ω notation: α (revenue-gated) + ω (time-based consensus reduction) + burn (ω − α)
+- **Option 1 vs Option 2 explorer** — archived: previous design comparing quarterly step-up vs continuous weekly evaluation
 
 ## Context
 
