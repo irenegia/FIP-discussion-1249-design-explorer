@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Block-reward split — Scenario Explorer</title>
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --text: #1a1a1a; --text2: #6b6b6b;
+    --border: rgba(0,0,0,0.1); --blue: #378ADD; --orange: #D85A30;
+    --green: #1D9E75; --gray: #B4B2A9; --pass: #639922; --fail: #E24B4A;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem; line-height: 1.6; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 0.25rem; }
+  h2 { font-size: 15px; font-weight: 500; margin-bottom: 0.5rem; color: var(--text); }
+  .ctrl-row { display: flex; align-items: center; gap: 12px; margin: 0 0 0.75rem; }
+  .ctrl-label { font-size: 13px; color: var(--text2); min-width: 170px; }
+  .ctrl-row input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; appearance: none; background: var(--border); border-radius: 2px; outline: none; }
+  .ctrl-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--blue); cursor: pointer; border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--border); }
+  .ctrl-val { font-size: 13px; font-weight: 500; min-width: 56px; text-align: right; }
+  .legend-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 0.5rem 0 8px; font-size: 12px; color: var(--text2); }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .note { font-size: 13px; color: var(--text2); margin: 0 0 0.5rem; }
+  .chart-wrap { position: relative; width: 100%; height: 300px; margin-bottom: 0.5rem; }
+
+  .step-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 1rem 0; }
+  .step-table th { text-align: left; font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--border); color: var(--text2); font-size: 11px; }
+  .step-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); }
+  .pass { color: var(--pass); }
+  .fail { color: var(--fail); }
+  .principles-box { background: var(--bg2); border-radius: 8px; padding: 1rem 1.25rem; margin: 0 0 1.5rem; font-size: 13px; line-height: 1.7; }
+  .principles-box strong { font-weight: 500; }
+  .principle-tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; margin: 0 4px 0 0; font-weight: 500; font-family: ui-monospace, Menlo, monospace; }
+  .w0 { background: #E6F1FB; color: #0C447C; }
+  .w1 { background: #E1F5EE; color: #085041; }
+  .wb { background: rgba(228,75,75,0.12); color: #C0392B; }
+  .pbeta { background: #FFF3E0; color: #8B5E00; }
+  code.eq { font-size:12px; background:rgba(0,0,0,0.05); padding:3px 8px; border-radius:3px; display:inline-block; margin:4px 0 0; }
+</style>
+</head>
+<body>
+
+<h1>Block-reward split</h1>
+<p class="note" style="margin-bottom:1rem;">Each epoch the block reward is divided across two streams by weight. The weights always sum to 1 (100%).</p>
+
+<div class="principles-box">
+  <strong style="font-size:14px;">How it works</strong>
+
+  <div style="margin-top:0.75rem;">
+    <span class="principle-tag w0">w0</span> <strong>Consensus weight (w0)</strong>
+    <div style="margin:0.25rem 0 0 2.5rem;">
+      &bull; The existing consensus network will receive <code>w0 &times; BR</code> each epoch &mdash; paid to the winning miner exactly as today.<br>
+      &bull; Follows a policy trajectory: starts at <strong>95%</strong> and ramps down continuously to <strong>~50%</strong> over 9 quarters (~5&nbsp;pp / quarter). Deterministic and time-based &mdash; no revenue gate.
+    </div>
+  </div>
+
+  <div style="margin-top:0.75rem;">
+    <span class="principle-tag w1">w1</span> <strong>Service-subnet weight</strong> (w1)
+    <div style="margin:0.25rem 0 0 2.5rem;">
+      &bull; A new incentive stream for storage providers delivering a service. It receives <code>w1 &times; BR</code>, split among orchestrators by their verifiable revenue.<br>
+      &bull; Revenue-gated. Starts at 10% after Q1 (bootstrap quarter, ungated). From Q2 onward, steps up by 5&nbsp;pp per quarter if on-chain deal revenue clears the target; otherwise holds.
+    </div>
+  </div>
+
+  <div style="margin-top:0.75rem;">
+    <span class="principle-tag wb">wb</span> <strong>Burn weight.</strong> The remainder is burned each epoch: <code>wb = 1 &minus; &sum;<sub>i</sub> w<sub>i</sub> = 1 &minus; w0 &minus; w1</code>. If w1 tracks the share that leaves consensus (1&minus;w0), minimal burn. If w1 lags, the gap burns (deflationary).
+  </div>
+
+  <hr style="border:none; border-top:1px solid var(--border); margin:1rem 0;">
+
+  <div>
+    <strong>Per-epoch split</strong> &mdash; weights sum to 1<br>
+    <code class="eq">
+    Consensus: w0 &times; BR &nbsp;|&nbsp; Service subnet: w1 &times; BR &nbsp;|&nbsp; Burn: wb &times; BR &nbsp;&nbsp;(w0 + w1 + wb = 1)
+    </code>
+  </div>
+
+  <div style="margin-top:0.75rem;">
+    <strong>Revenue gate</strong> (drives w1)<br>
+    <code class="eq">
+    MeasuredDealRevenue(Q) &ge; &beta; &times; ServiceAlloc(Q&minus;1) &nbsp;|&nbsp; pass &rarr; w1 += step_size, else hold
+    </code>
+  </div>
+
+  <div style="margin-top:0.75rem;">
+    <span class="principle-tag pbeta">&beta;</span> <strong>Beta</strong> (target multiplier)
+    <div style="margin:0.25rem 0 0 2.5rem;">
+      &bull; Sets how much deal revenue must exceed last quarter&rsquo;s service allocation to unlock the next w1 step. Starts low (&beta;<sub>start</sub>) and escalates toward &beta;<sub>max</sub> as w1 grows, making later steps progressively harder to clear.
+    </div>
+  </div>
+
+  <div style="margin-top:0.75rem; font-size:12px;">
+    More info: <a href="https://docs.google.com/document/d/1WWlIpBnjSxNjxTLP5_ykzMHR9QTiC-foOx_cmJkXdnQ/edit?tab=t.hqep0n7h48xs" target="_blank" style="color:#378ADD;">FIL+ Reform &ndash; Alpha Ramp-Up Design Doc</a>
+  </div>
+</div>
+
+<!-- ── How to use ── -->
+<div class="principles-box" style="background: var(--bg); border: 1px solid var(--border);">
+  <strong>How to use this explorer</strong><br>
+  <strong>Step 1:</strong> Choose a revenue growth model below. Deal revenue = total $ value of paid storage deals (not the 0.5% network fee). Adjust the starting revenue, growth rate, and FIL price to match your assumptions.<br>
+  <strong>Step 2:</strong> Pick the escalation shape (power-law or exponential) and tune the gate parameters (&beta; start, plus k / &beta; max, or the per-step ratio) to see how they affect the w1 progression and burn. The w0 trajectory (95% &rarr; 50% over 9Q) and the w1 step size (5 pp) are fixed.<br>
+  <strong>Step 3:</strong> Check the simulated outputs below &mdash; the quarterly scenario table and charts update live as you move the sliders.
+</div>
+
+<!-- ── BR overestimate warning ── -->
+<div style="margin-top: 0.75rem; padding: 0.7rem 1rem; background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; font-size: 12.5px; color: #5d4037;">
+  <strong style="color:#e65100;">&#9888; Block-reward overestimate:</strong>
+  This model applies simple-minting decay (6-year half-life) to the <em>entire</em> block reward. In reality, ~14% of current emission comes from baseline minting, which decays much faster when QAP declines (currently &minus;30&nbsp;PiB/day). Result: <strong>the model overestimates BR<sub>q</sub> by roughly +1% in Q1, growing to ~+14.5% by Q16</strong> (average &asymp; +9% over 16&nbsp;quarters). This makes the revenue gate <em>harder</em> to clear than it would be in practice &mdash; a conservative/pessimistic bias. Keep this in mind when interpreting near-pass or near-fail scenarios in later quarters.
+</div>
+
+<!-- ── Inputs box (Steps 1 & 2) ── -->
+<div style="border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin-top: 1.5rem;">
+
+<div style="margin-bottom: 0.75rem;">
+  <span style="font-size: 15px; font-weight: 600; color: var(--text);">Step 1: Simulation inputs</span>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
+<div>
+<div class="ctrl-row">
+  <span class="ctrl-label">Revenue growth model</span>
+  <select id="revMode" style="font-size:13px; padding:3px 6px; border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text); cursor:pointer;">
+    <option value="decel">Decaying growth</option>
+    <option value="scurve">Peak-and-settle</option>
+    <option value="wasabi">Wasabi benchmark</option>
+    <option value="custom" selected>Custom (per-quarter)</option>
+  </select>
+  <span class="ctrl-val" id="revMode-out" style="min-width:auto; font-weight:400; color:var(--text2); font-size:12px;">starts at slider, peaks ~Q4, settles to long-term rate</span>
+</div>
+<div class="ctrl-row">
+  <span class="ctrl-label">Expected deal revenue in Q2</span>
+  <input type="range" min="0" max="1" value="0.466" step="0.005" id="revNowLog" />
+  <span class="ctrl-val" id="revNow-out">$25.0K</span>
+</div>
+<div class="ctrl-row">
+  <span class="ctrl-label" id="revGrowthLabel">Growth rate Q2→Q3</span>
+  <input type="range" min="20" max="300" value="100" step="5" id="revGrowth" />
+  <span class="ctrl-val" id="revGrowth-out">100%</span>
+</div>
+<div class="ctrl-row">
+  <span class="ctrl-label">Long-term growth rate</span>
+  <input type="range" min="0" max="30" value="10" step="1" id="growthFloor" />
+  <span class="ctrl-val" id="growthFloor-out">10%</span>
+</div>
+<div id="customGrowthBox" style="display:block; margin:0.25rem 0 0.5rem; padding:0.6rem 0.75rem; background:var(--bg2); border-radius:6px;">
+  <div style="font-size:12px; color:var(--text2); margin-bottom:0.4rem;">QoQ growth rate for each quarter (%):</div>
+  <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font-size:11px;">
+    <div style="text-align:center;"><label style="color:var(--text2);">Q3</label><br><input type="number" class="cg-input" data-qi="2" value="150" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q4</label><br><input type="number" class="cg-input" data-qi="3" value="150" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q5</label><br><input type="number" class="cg-input" data-qi="4" value="150" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q6</label><br><input type="number" class="cg-input" data-qi="5" value="130" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q7</label><br><input type="number" class="cg-input" data-qi="6" value="120" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q8</label><br><input type="number" class="cg-input" data-qi="7" value="100" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q9</label><br><input type="number" class="cg-input" data-qi="8" value="100" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q10</label><br><input type="number" class="cg-input" data-qi="9" value="80" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q11</label><br><input type="number" class="cg-input" data-qi="10" value="70" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q12</label><br><input type="number" class="cg-input" data-qi="11" value="60" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q13</label><br><input type="number" class="cg-input" data-qi="12" value="60" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q14</label><br><input type="number" class="cg-input" data-qi="13" value="50" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q15</label><br><input type="number" class="cg-input" data-qi="14" value="50" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+    <div style="text-align:center;"><label style="color:var(--text2);">Q16</label><br><input type="number" class="cg-input" data-qi="15" value="45" style="width:100%;text-align:center;font-size:12px;padding:3px 2px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);"></div>
+  </div>
+</div>
+<div class="ctrl-row">
+  <span class="ctrl-label">FIL price (USD)</span>
+  <input type="range" min="0.1" max="20" value="0.8" step="0.01" id="filPrice" />
+  <span class="ctrl-val" id="filPrice-out">$0.80</span>
+</div>
+<div id="filPriceStatus" style="font-size:11px; color:var(--text2); margin:-0.4rem 0 0.75rem; min-height:14px;">&#8635; loading live FIL price&hellip;</div>
+</div>
+<div>
+  <h2 style="margin-bottom: 0.25rem;">Growth rate per quarter</h2>
+  <div class="chart-wrap" style="height: 220px;"><canvas id="chartGrowth"></canvas></div>
+</div>
+</div>
+
+<details style="font-size:13px; color:var(--text2); margin:0 0 0.5rem;">
+<summary style="cursor:pointer; font-weight:500; color:var(--text2);">How these models work &darr;</summary>
+<p style="margin:0.5rem 0 0.25rem;"><b>Expected deal revenue in Q2</b> (R<sub>Q2</sub>) is the first measured quarter &mdash; total $ value of paid storage deals on-chain (Q1 is the bootstrap quarter with no revenue measurement). <b>Growth rate</b> (g) compounds from Q2 forward using one of these models:</p>
+<p style="margin:0.25rem 0 0;"><b>Decaying growth:</b> <code>R(i) = R(i&minus;1) &times; (1 + g<sub>i</sub>)</code> where <code>g<sub>i</sub> = floor + (g &minus; floor) &times; e<sup>&minus;0.45(i&minus;1)</sup></code><br>
+<span style="color:var(--text2);">Growth rate starts at g (slider value) in Q2, decays exponentially toward the long-term rate steady state.</span></p>
+<p style="margin:0.25rem 0 0;"><b>Peak-and-settle:</b> <code>R(i) = R(i&minus;1) &times; (1 + g<sub>i</sub>)</code>, gamma-shaped growth rate normalised so g<sub>1</sub> = g (slider value)<br>
+<span style="color:var(--text2);">Starts at g, ramps up over 2&ndash;3 quarters (peak ~Q4), then steep decay to floor by ~Q13. As revenue gets large, growth rate drops fast.</span></p>
+<p style="margin:0.25rem 0 0;"><b>Custom (per-quarter):</b> You set the QoQ growth rate individually for each quarter from Q3 to Q16. The Q2 starting revenue slider sets R<sub>Q2</sub>; after that, each quarter compounds at the rate you type in. Growth rate and long-term rate sliders are replaced by the per-quarter inputs.</p>
+<p style="margin:0.25rem 0 0;"><b>Wasabi benchmark:</b> Implied QoQ growth rates derived from Wasabi Technologies (cloud storage, founded 2017). Verified annual revenue: $18M&rarr;$54M&rarr;$92.5M&rarr;$134.7M&rarr;$160.1M (2020&ndash;2024). Sources: getlatka.com, blocksandfiles.com, wasabi.com press releases.<br>
+<span style="color:var(--text2);">Each year&rsquo;s QoQ = (end/start)<sup>1/4</sup>&minus;1, held constant across 4 quarters: 32%/q &rarr; 14%/q &rarr; 10%/q &rarr; 4%/q. Growth rate and long-term rate sliders are ignored. Starting deal revenue slider still sets R<sub>0</sub> (Wasabi&rsquo;s absolute $ figures don&rsquo;t apply to Filecoin &mdash; only the growth shape is borrowed).</span></p>
+<p style="margin:0.25rem 0 0;">Block reward: 63,727 FIL/day (Apr 2026, via Filfox) with 6-year half-life decay. BR<sub>q</sub> = start-of-quarter daily rate &times; 90 days &times; FIL price (~1.4% overestimate vs exact integration).</p>
+<p style="margin:0.25rem 0 0;"><b>Note:</b> This model only applies simple minting decay to BR<sub>q</sub>. It does not account for baseline minting, which depends on network QAP vs the baseline power function. Currently baseline contributes ~14% of daily emission because QAP is well below baseline. If QAP were to grow, baseline minting would increase BR<sub>q</sub> beyond what this model projects, raising the gate target.</p>
+</details>
+
+<!-- ── Protocol parameters ── -->
+<div style="margin-bottom: 0.75rem; margin-top: 1.5rem;">
+  <span style="font-size: 15px; font-weight: 600; color: var(--text);">Step 2: Gate parameters</span>
+  <div style="font-size: 12px; color: var(--text2); margin-top: 0.25rem;">
+    <code id="betaFormula" style="background:rgba(0,0,0,0.05); padding:2px 6px; border-radius:3px;">&beta; = &beta;<sub>start</sub> + (&beta;<sub>max</sub> &minus; &beta;<sub>start</sub>) &times; ((w1 &minus; w1<sub>start</sub>) / (w1<sub>max</sub> &minus; w1<sub>start</sub>))<sup>k</sup></code>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
+<div>
+<div class="ctrl-row">
+  <span class="ctrl-label">Escalation shape</span>
+  <select id="betaShape" style="font-size:13px; padding:3px 6px; border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text); cursor:pointer; flex:1;">
+    <option value="power" selected>Power-law (k)</option>
+    <option value="exp">Exponential (&times; per step)</option>
+  </select>
+  <span class="ctrl-val" style="min-width:auto;"></span>
+</div>
+<div class="ctrl-row">
+  <span class="ctrl-label">&beta; start (entry multiplier)</span>
+  <input type="range" min="0.005" max="1" value="0.025" step="0.005" id="betaStart" />
+  <span class="ctrl-val" id="betaStart-out">0.025</span>
+</div>
+<div id="powerParams">
+<div class="ctrl-row">
+  <span class="ctrl-label">k (escalation exponent, &gt;1)</span>
+  <input type="range" min="1" max="6" value="4" step="0.1" id="kParam" />
+  <span class="ctrl-val" id="kParam-out">4.0</span>
+</div>
+<div class="ctrl-row">
+  <span class="ctrl-label">&beta; max (top multiplier)</span>
+  <input type="range" min="1" max="10" value="3.6" step="0.1" id="betaMax" />
+  <span class="ctrl-val" id="betaMax-out">3.6x</span>
+</div>
+</div>
+<div id="expParams" style="display:none;">
+<div class="ctrl-row">
+  <span class="ctrl-label">ratio r (&times; per 5pp step)</span>
+  <input type="range" min="1.1" max="3" value="1.9" step="0.05" id="betaRatio" />
+  <span class="ctrl-val" id="betaRatio-out">&times;1.90</span>
+</div>
+</div>
+</div>
+<div>
+  <h2 style="margin-bottom: 0.25rem;">Target multiplier escalation</h2>
+  <div class="chart-wrap" style="height: 220px;"><canvas id="chartBeta"></canvas></div>
+</div>
+</div>
+
+</div><!-- end inputs box -->
+
+<!-- ── Outputs box (Step 3) ── -->
+<div style="border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin-top: 1.25rem;">
+
+<div style="margin-bottom: 0.75rem;">
+  <span style="font-size: 15px; font-weight: 600; color: var(--text);">Step 3: Simulated outputs</span>
+</div>
+<h2>Quarterly scenario</h2>
+<div id="mainTable"></div>
+
+<h2 style="margin-top: 1.5rem;">Share leaving consensus (1&minus;w0 = w1 + wb)</h2>
+<p class="note" style="margin-bottom:0.25rem;">1&minus;w0 is the share diverted from consensus each epoch. It splits into w1 (allocated to the service subnet) and wb (burned). The remaining w0 stays with consensus and is not shown here.</p>
+<div class="legend-row">
+  <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>1&minus;w0 &mdash; leaves consensus (= w1 + wb)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>w1 &mdash; service subnet (gated)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#E44B4B;"></span>wb &mdash; burn</span>
+</div>
+<div class="chart-wrap"><canvas id="chartWeights"></canvas></div>
+
+<h2 style="margin-top: 1.5rem;">Quarterly flows ($M)</h2>
+<div class="legend-row">
+  <span class="legend-item"><span class="legend-dot" style="background:#1a1a1a;"></span>Block reward (emission)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>Consensus (w0 &times; BR<sub>q</sub>)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>Service subnet (w1 &times; BR<sub>q</sub>)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#E44B4B;"></span>Burn (wb &times; BR<sub>q</sub>)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#8B5E00;"></span>Gate target (&beta; &times; ServiceAlloc<sub>Q&minus;1</sub>)</span>
+</div>
+<div class="chart-wrap"><canvas id="chartEmission"></canvas></div>
+
+</div><!-- end outputs box -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const gc = 'rgba(0,0,0,0.05)';
+const tc = 'rgba(0,0,0,0.4)';
+const QUARTERS = 16;
+const TABLE_QUARTERS = 16;
+const qLabels = Array.from({length: QUARTERS}, (_, i) => 'Q' + (i+1));
+
+function el(id) { return document.getElementById(id); }
+
+// Filecoin emission constants
+const DAILY_BR_FIL = 63727;
+const HALF_LIFE_DAYS = 6 * 365.25;
+const DAYS_PER_Q = 90;
+const DECAY_PER_Q = Math.pow(0.5, DAYS_PER_Q / HALF_LIFE_DAYS);
+const EPOCHS_PER_Q = 90 * 2880; // 2880 epochs/day × 90 days
+
+// Hardcoded mechanism constants
+// α (= the budget that leaves consensus = 1 − w0) ramps from 5% to 50% over 9 quarters,
+// so w0 ramps from 95% down to 50%.
+const ALPHA_CAP = 50;        // α cap: 50%  →  w0 floor = 50%
+const ALPHA_RAMP_Q = 9;      // ramp duration: 9 quarters
+const STEP_SIZE = 5;          // w1 (= α_floor) step size: 5 pp
+const W1_ENTRY = 10;          // entry service weight after Q1 bootstrap (%)
+
+// β escalation curve, evaluated at the pre-step w1. Two convex/back-loaded shapes:
+//  • power-law: flat near the bottom, steep toward the top (β_start, β_max, k)
+//  • exponential: each 5pp step multiplies β by a constant ratio (β_start, ratio)
+function computeBeta(w1, bp, aMax) {
+  if (bp.shape === 'exp') {
+    const n = Math.max(0, (w1 - W1_ENTRY) / STEP_SIZE); // steps above the 10% entry
+    return bp.betaStart * Math.pow(bp.ratio, n);
+  }
+  const norm = w1 <= STEP_SIZE ? 0 : Math.min(1, (w1 - STEP_SIZE) / (aMax - STEP_SIZE));
+  return bp.betaStart + (bp.betaMax - bp.betaStart) * Math.pow(norm, bp.k);
+}
+
+const MODE_DESC = {
+  decel:  'starts high, decays toward long-term rate',
+  scurve: 'starts at slider, peaks ~Q4, settles to long-term rate',
+  wasabi: 'verified Wasabi revenue 2020–2024: 32→14→10→4 %/q, sliders ignored',
+  custom: 'you set the growth rate for each quarter individually'
+};
+
+const GROWTH_LABEL = { decel: 'Growth rate Q2→Q3', scurve: 'Growth rate Q2→Q3', wasabi: '(not used — fixed rates)', custom: '(set per quarter below)' };
+el('revMode').addEventListener('change', function() {
+  el('revMode-out').textContent = MODE_DESC[this.value];
+  el('revGrowthLabel').textContent = GROWTH_LABEL[this.value];
+  const isCustom = this.value === 'custom';
+  el('customGrowthBox').style.display = isCustom ? 'block' : 'none';
+  el('revGrowth').parentElement.style.display = isCustom ? 'none' : '';
+  el('growthFloor').parentElement.style.display = isCustom ? 'none' : '';
+  updateAll();
+});
+
+// Wasabi Technologies implied QoQ growth rates (2021–2024)
+const WASABI_QOQ = [0.32, 0.32, 0.32, 0.32, 0.14, 0.14, 0.14, 0.14, 0.10, 0.10, 0.10, 0.10, 0.04, 0.04, 0.04, 0.04];
+
+function generateRevenue(revQ2, revGrowth, mode, growthFloor) {
+  // revQ2 = expected deal revenue in Q2 (first measured quarter)
+  // Q1 (bootstrap) has no measured revenue → revs[0] = 0
+  const revs = [0]; // Q1: no revenue measured
+  for (let i = 1; i < QUARTERS; i++) {
+    let r;
+    if (i === 1) {
+      r = revQ2; // Q2 = slider value
+    } else if (mode === 'custom') {
+      const customInputs = document.querySelectorAll('.cg-input');
+      const gIdx = i - 2; // Q3 → index 0, Q4 → index 1, ...
+      const g = gIdx < customInputs.length ? parseFloat(customInputs[gIdx].value) / 100 : 0;
+      r = revs[i-1] * (1 + (isNaN(g) ? 0 : g));
+    } else if (mode === 'wasabi') {
+      r = revs[i-1] * (1 + WASABI_QOQ[i-2]); // offset by 1 since we start growth from Q2
+    } else if (mode === 'decel') {
+      const g = Math.max(growthFloor, growthFloor + (revGrowth - growthFloor) * Math.exp(-0.45 * (i - 2)));
+      r = revs[i-1] * (1 + g);
+    } else {
+      // Peak-and-settle: growth shape starts from Q3 onward
+      const qi = i - 1; // quarters after Q2
+      const p = 3;
+      const raw = Math.pow(qi / p, 2) * Math.exp(2 * (1 - qi / p));
+      const raw1 = Math.pow(1 / p, 2) * Math.exp(2 * (1 - 1 / p));
+      const shape = raw / raw1;
+      const g = Math.max(growthFloor, growthFloor + (revGrowth - growthFloor) * shape);
+      r = revs[i-1] * (1 + g);
+    }
+    revs.push(parseFloat(Math.max(r, 0).toPrecision(6)));
+  }
+  return revs;
+}
+
+// Log slider: 0→$1K, 0.5→~$31.6K, 1→$1M (in $M internally)
+function logSliderToRevenue(v) { return 0.001 * Math.pow(1000, v); }
+
+function fmtRevenue(mVal) {
+  if (mVal === 0 || isNaN(mVal)) return '$0';
+  const kVal = mVal * 1000;
+  if (kVal < 1) return '$' + (kVal * 1000).toFixed(0);
+  if (mVal < 0.01) return '$' + kVal.toFixed(1) + 'K';
+  if (mVal < 1) return '$' + kVal.toFixed(0) + 'K';
+  return '$' + mVal.toFixed(1) + 'M';
+}
+
+function getShared() {
+  const sliderVal = parseFloat(el('revNowLog').value);
+  const revNow = logSliderToRevenue(sliderVal);
+  const revGrowth = parseFloat(el('revGrowth').value) / 100;
+  const growthFloor = parseFloat(el('growthFloor').value) / 100;
+  const revMode = el('revMode').value;
+  const filPrice = parseFloat(el('filPrice').value);
+  const aMax = ALPHA_CAP;
+  const alphaRampQ = ALPHA_RAMP_Q;
+  const shape = el('betaShape').value;
+  const k = parseFloat(el('kParam').value);
+  const betaStart = parseFloat(el('betaStart').value);
+  const betaMax = parseFloat(el('betaMax').value);
+  const ratio = parseFloat(el('betaRatio').value);
+  el('revNow-out').textContent = fmtRevenue(revNow);
+  el('revGrowth-out').textContent = Math.round(revGrowth * 100) + '%';
+  el('growthFloor-out').textContent = Math.round(growthFloor * 100) + '%';
+  el('filPrice-out').textContent = '$' + filPrice.toFixed(2);
+  el('kParam-out').textContent = k.toFixed(1);
+  el('betaStart-out').textContent = betaStart.toFixed(3);
+  el('betaMax-out').textContent = betaMax.toFixed(1) + 'x';
+  el('betaRatio-out').textContent = '×' + ratio.toFixed(2);
+  const revs = generateRevenue(revNow, revGrowth, revMode, growthFloor);
+  const qBRs = [];
+  for (let i = 0; i < QUARTERS; i++) {
+    const dailyFil = DAILY_BR_FIL * Math.pow(DECAY_PER_Q, i);
+    qBRs.push(parseFloat((dailyFil * DAYS_PER_Q * filPrice / 1e6).toFixed(3)));
+  }
+  return { revs, qBRs, aMax, alphaRampQ, shape, k, betaStart, betaMax, ratio };
+}
+
+// α = budget leaving consensus: continuous linear ramp from 5% at t₀ to aMax over alphaRampQ quarters.
+// w0 = 100 − α (ramps 95% → 50%). Returns end-of-quarter α values.
+function calcAlphaRamp(aMax, alphaRampQ) {
+  const ALPHA_START = 5;
+  const alphas = [];
+  for (let i = 0; i < QUARTERS; i++) {
+    const t = (i + 1) / alphaRampQ; // fraction of ramp completed at end of quarter i+1
+    const alpha = Math.min(aMax, ALPHA_START + (aMax - ALPHA_START) * Math.min(t, 1));
+    alphas.push(alpha);
+  }
+  return alphas;
+}
+
+// w1 (= α_floor): gated service-subnet weight.
+// Q1 is bootstrap (ungated): w1 = α(end of Q1). From Q2: step up 5pp if the gate clears.
+function calcAlphaFloor(revs, qBRs, alphas, aMax, bp) {
+  const stepSize = STEP_SIZE;
+  const alphaFloors = [], gates = [], passed = [], allocations = [], betas = [];
+
+  let currentFloor = 0;
+
+  for (let i = 0; i < QUARTERS; i++) {
+    if (i === 0) {
+      // Q1 bootstrap: w1 = α, everything (that left consensus) allocated to service, no gate
+      currentFloor = alphas[0];
+      alphaFloors.push(currentFloor);
+      const alloc = currentFloor / 100 * qBRs[i];
+      allocations.push(alloc);
+      gates.push(0);
+      betas.push(0);
+      passed.push(true); // ungated
+    } else if (currentFloor >= alphas[i]) {
+      // w1 already at the budget ceiling — no gate, no β.
+      // Still record the weight/allocation so all arrays stay aligned across every quarter.
+      betas.push(null);
+      gates.push(null);
+      passed.push(null); // null = n/a (capped)
+      alphaFloors.push(currentFloor);
+      allocations.push(currentFloor / 100 * qBRs[i]);
+    } else {
+      // Gate check at end of quarter: DealRevenue(Q) ≥ β × ServiceAlloc(Q-1)
+      // β is evaluated at the pre-step w1 (currentFloor); on a clear, w1 then steps +5pp.
+      const prevAlloc = allocations[i - 1];
+      const beta = computeBeta(currentFloor, bp, aMax);
+      const gate = beta * prevAlloc;
+      betas.push(beta);
+      gates.push(gate);
+
+      if (revs[i] >= gate && gate >= 0) {
+        currentFloor = Math.min(currentFloor + stepSize, alphas[i]); // can't exceed budget (1−w0)
+        passed.push(true);
+      } else {
+        passed.push(false);
+      }
+
+      alphaFloors.push(currentFloor);
+      allocations.push(currentFloor / 100 * qBRs[i]);
+    }
+  }
+  return { alphaFloors, gates, passed, allocations, betas };
+}
+
+// Band labels for the "share leaving consensus" chart (1−w0 envelope, split into w1 + wb)
+const weightAreaLabelsPlugin = {
+  id: 'weightAreaLabels',
+  afterDraw(chart) {
+    const ctx = chart.ctx;
+    const svc = chart.getDatasetMeta(0); // w1 (service) line / area top
+    const env = chart.getDatasetMeta(1); // 1−w0 envelope line
+    if (!svc.data.length || !env.data.length) return;
+
+    const mid = Math.floor(env.data.length / 2);
+    const midX = env.data[mid].x;
+    const envY = env.data[mid].y;       // top of diverted budget (1−w0)
+    const svcY = svc.data[mid].y;       // top of service band (w1)
+    const bottomY = chart.chartArea.bottom;
+
+    ctx.save();
+    ctx.font = '11px ' + getComputedStyle(document.body).fontFamily;
+    ctx.textAlign = 'center';
+
+    if (svcY - envY > 18)    { ctx.fillStyle = 'rgba(192,57,43,0.8)';  ctx.fillText('burn (wb)', midX, (envY + svcY) / 2 + 4); }
+    if (bottomY - svcY > 18) { ctx.fillStyle = 'rgba(8,80,65,0.85)';   ctx.fillText('service (w1)', midX, (svcY + bottomY) / 2 + 4); }
+
+    ctx.restore();
+  }
+};
+
+const weightChartOpts = {
+  responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
+  scales: {
+    x: { grid: { color: gc }, ticks: { color: tc, font: { size: 10 } } },
+    y: { position: 'left', title: { display: true, text: 'Share of block reward (%)', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => v+'%' }, min: 0 }
+  },
+  plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: {
+    label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%',
+    afterBody: items => { const ds = items[0].chart.data.datasets; const i = items[0].dataIndex; return 'wb (burn): ' + Math.max(0, ds[1].data[i] - ds[0].data[i]).toFixed(1) + '%'; }
+  } } }
+};
+
+const betaChartOpts = {
+  responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
+  scales: {
+    x: { type: 'linear', title: { display: true, text: 'w1 — service weight (%)', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => v+'%' }, min: 0 },
+    y: { type: 'linear', title: { display: true, text: 'Target multiplier (β)', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => v.toFixed(1)+'x' }, min: 0 }
+  },
+  plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => { const v = ctx.parsed.y; return ctx.dataset.label + ': ' + (v < 1 ? v.toFixed(3) : v.toFixed(2)) + 'x'; } } } }
+};
+
+const emissionChartOpts = {
+  responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
+  scales: {
+    x: { grid: { color: gc }, ticks: { color: tc, font: { size: 10 } } },
+    y: { position: 'left', title: { display: true, text: '$M / quarter', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => fmtRevenue(v) }, min: 0 }
+  },
+  plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtRevenue(ctx.parsed.y) } } }
+};
+
+const growthChartOpts = {
+  responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
+  scales: {
+    x: { grid: { color: gc }, ticks: { color: tc, font: { size: 10 } } },
+    y: { position: 'left', title: { display: true, text: 'Growth %/q', color: tc, font: { size: 11 } }, grid: { color: gc }, ticks: { color: tc, font: { size: 10 }, callback: v => v+'%' }, min: 0 }
+  },
+  plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) + '%' : '' } } }
+};
+
+let cWeights, cBeta, cGrowth, cEmission;
+function initCharts() {
+  cWeights = new Chart(el('chartWeights'), { type: 'line', data: { labels: qLabels, datasets: [] }, options: weightChartOpts, plugins: [weightAreaLabelsPlugin] });
+  cBeta = new Chart(el('chartBeta'), { type: 'line', data: { datasets: [] }, options: betaChartOpts });
+  cGrowth = new Chart(el('chartGrowth'), { type: 'line', data: { labels: qLabels, datasets: [] }, options: growthChartOpts });
+  cEmission = new Chart(el('chartEmission'), { type: 'line', data: { labels: qLabels, datasets: [] }, options: emissionChartOpts });
+}
+
+function buildMainTable(revs, qBRs, alphas, f) {
+  const { alphaFloors, gates, passed, allocations, betas } = f;
+  let h = '<p class="note" style="margin-bottom:0.5rem;">Gate at end of each quarter checks: MeasuredDealRevenue(Q) &ge; DealRevTarget(Q) = &beta; &times; ServiceAlloc(Q&minus;1). Q1 is the bootstrap quarter &mdash; ungated, no revenue measured. Weights: w0 + w1 + wb = 100%.</p>';
+  h += '<table class="step-table"><tr><th>Quarter</th><th>DealRev(Q) <span style="font-weight:400;color:var(--text2)">sim.</span></th><th>ARR</th><th>Growth</th><th>DealRevTarget(Q)</th><th>ServiceAlloc(Q&minus;1)</th><th>Gate cleared?</th><th>w0 <span style="font-weight:400;color:var(--text2)">consensus</span></th><th>w1 <span style="font-weight:400;color:var(--text2)">service</span></th><th>wb <span style="font-weight:400;color:var(--text2)">burn</span></th><th>&beta;</th></tr>';
+  for (let i = 0; i < TABLE_QUARTERS; i++) {
+    const w0 = 100 - alphas[i];
+    const w1 = alphaFloors[i];
+    const wb = Math.max(0, alphas[i] - alphaFloors[i]);
+    // Growth %
+    let growthLabel;
+    if (i <= 1) { growthLabel = '—'; } // Q1 bootstrap, Q2 first measured — no prior to compare
+    else {
+      const prev = revs[i-1];
+      const pct = prev > 0 ? ((revs[i] - prev) / prev * 100) : 0;
+      growthLabel = (pct >= 100 ? pct.toFixed(0) : pct.toFixed(1)) + '%';
+    }
+    // Gate columns
+    let gateLabel, passLabel, passClass, betaLabel;
+    const dash = '<span style="color:var(--text2)">&mdash;</span>';
+    if (i === 0) {
+      gateLabel = dash;
+      passLabel = '<span style="color:var(--text2)">bootstrap</span>';
+      passClass = '';
+      betaLabel = dash;
+    } else if (passed[i] === null) {
+      // w1 at the budget ceiling — no gate applies
+      gateLabel = dash;
+      passLabel = '<span style="color:var(--text2)">capped</span>';
+      passClass = '';
+      betaLabel = dash;
+    } else {
+      gateLabel = fmtRevenue(gates[i]);
+      passLabel = passed[i] ? 'Yes' : 'No';
+      passClass = passed[i] ? 'pass' : 'fail';
+      betaLabel = (betas[i] < 1 ? betas[i].toFixed(3) : betas[i].toFixed(2)) + 'x';
+    }
+    const revLabel = i === 0 ? dash : fmtRevenue(revs[i]);
+    const prevAllocLabel = i === 0 ? dash : fmtRevenue(allocations[i-1]);
+    const arrLabel = i === 0 ? dash : fmtRevenue(revs[i] * 4);
+    h += '<tr><td>Q'+(i+1)+'</td><td>'+revLabel+'</td><td>'+arrLabel+'</td><td>'+growthLabel+'</td><td>'+gateLabel+'</td><td>'+prevAllocLabel+'</td><td class="'+passClass+'">'+passLabel+'</td><td>'+w0.toFixed(1)+'%</td><td>'+w1.toFixed(1)+'%</td><td style="color:'+(wb>0.05?'#E44B4B':'var(--text2)')+'">'+wb.toFixed(1)+'%</td><td>'+betaLabel+'</td></tr>';
+  }
+  h += '</table>';
+  el('mainTable').innerHTML = h;
+}
+
+function updateAll() {
+  const { revs, qBRs, aMax, alphaRampQ, shape, k, betaStart, betaMax, ratio } = getShared();
+  const bp = { shape, k, betaStart, betaMax, ratio };
+  const alphas = calcAlphaRamp(aMax, alphaRampQ);
+  const f = calcAlphaFloor(revs, qBRs, alphas, aMax, bp);
+
+  // Weight series
+  const w0Series = alphas.map(a => 100 - a);
+  const w1Series = f.alphaFloors.slice();
+  const wbSeries = alphas.map((a, i) => Math.max(0, a - f.alphaFloors[i]));
+  const oneMinusW0 = alphas.slice(); // 1−w0 = α = the share leaving consensus = w1 + wb
+
+  // Share leaving consensus: 1−w0 envelope, split into w1 (service, green) + wb (burn, red gap)
+  cWeights.data.datasets = [
+    { label:'w1 (service)', data:w1Series, borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,0.25)', borderWidth:2, pointRadius:0, order:2, fill:'origin', stepped:'after' },
+    { label:'1−w0 (leaves consensus)', data:oneMinusW0, borderColor:'#378ADD', backgroundColor:'rgba(228,75,75,0.2)', borderWidth:2.5, pointRadius:0, order:1, fill:'-1', tension:0.3 }
+  ];
+  cWeights.options.scales.y.max = aMax + 5;
+  cWeights.update('none');
+
+  // Growth rate chart
+  const growthPcts = revs.map((r, i) => (i <= 1 || revs[i-1] <= 0) ? null : ((r - revs[i-1]) / revs[i-1]) * 100);
+  cGrowth.data.datasets = [
+    { label:'Growth %/q', data:growthPcts, borderColor:'#555555', borderWidth:2, pointRadius:3, fill:false, tension:0.3, spanGaps:true }
+  ];
+  cGrowth.update('none');
+
+  buildMainTable(revs, qBRs, alphas, f);
+
+  // Quarterly flows chart
+  const consensusDollars = w0Series.map((w, i) => w / 100 * qBRs[i]);
+  const burnDollars = wbSeries.map((w, i) => w / 100 * qBRs[i]);
+  const gateTarget = f.gates.map((g, i) => (i === 0 || g === null) ? null : g);
+  cEmission.data.datasets = [
+    { label: 'Block reward', data: qBRs, borderColor: '#1a1a1a', borderWidth: 2.5, pointRadius: 0, fill: false },
+    { label: 'Consensus (w0×BR_q)', data: consensusDollars, borderColor: '#378ADD', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 },
+    { label: 'Service subnet (w1×BR_q)', data: f.allocations, borderColor: '#1D9E75', borderWidth: 2.5, pointRadius: 3, fill: false, tension: 0.3 },
+    { label: 'Burn (wb×BR_q)', data: burnDollars, borderColor: '#E44B4B', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 },
+    { label: 'Gate target (β×ServiceAlloc_Q-1)', data: gateTarget, borderColor: '#8B5E00', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 }
+  ];
+  cEmission.update('none');
+
+  // Target multiplier escalation curve (β as a function of w1 = service weight)
+  const STEPS = 50;
+  const convexPts = [];
+  let maxBeta = 0;
+  for (let i = 0; i <= STEPS; i++) {
+    const af = (aMax / STEPS) * i;
+    const y = computeBeta(af, bp, aMax);
+    if (af >= W1_ENTRY && y > maxBeta) maxBeta = y;
+    convexPts.push({ x: af, y });
+  }
+  const shapeLabel = shape === 'exp' ? 'Exponential (×' + ratio.toFixed(2) + '/step)' : 'Power-law (k=' + k.toFixed(1) + ')';
+  cBeta.data.datasets = [
+    { label: shapeLabel, data: convexPts, borderColor: '#8B5E00', borderWidth: 2.5, pointRadius: 0, fill: false }
+  ];
+  cBeta.options.scales.x.max = aMax;
+  cBeta.options.scales.y.max = Math.max(0.5, Math.ceil(maxBeta * 1.1 * 10) / 10);
+  cBeta.update('none');
+}
+
+// ── Live FIL price (price oracle, with fallback) ───────────────
+// On load we fetch the current FIL/USD spot price and seed the slider with it.
+// The slider stays fully adjustable — drag it to test lower or higher prices.
+const DEFAULT_FIL_PRICE = 0.8;
+let livePrice = null;
+const PRICE_SOURCES = [
+  { name: 'CoinGecko',     url: 'https://api.coingecko.com/api/v3/simple/price?ids=filecoin&vs_currencies=usd', parse: d => d && d.filecoin && d.filecoin.usd },
+  { name: 'CryptoCompare', url: 'https://min-api.cryptocompare.com/data/price?fsym=FIL&tsyms=USD',              parse: d => d && d.USD }
+];
+
+function applyFilPrice(p) {
+  const slider = el('filPrice');
+  p = parseFloat(p);
+  if (isNaN(p)) return;
+  // Expand the slider range if the live price falls outside the default bounds
+  if (p > parseFloat(slider.max)) slider.max = Math.ceil(p * 1.5);
+  if (p < parseFloat(slider.min)) slider.min = Math.max(0.01, Math.floor(p * 100) / 100);
+  slider.value = p;
+  updateAll();
+}
+
+function wireResetLink() {
+  const r = el('resetFil');
+  if (r) r.addEventListener('click', e => { e.preventDefault(); if (livePrice != null) applyFilPrice(livePrice); });
+}
+
+async function fetchOne(src) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 6000);
+  try {
+    const res = await fetch(src.url, { signal: ctrl.signal, cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const price = src.parse(data);
+    if (!price || isNaN(price)) throw new Error('no price field');
+    return parseFloat(price);
+  } finally { clearTimeout(timer); }
+}
+
+async function fetchFilPrice() {
+  const statusEl = el('filPriceStatus');
+  for (const src of PRICE_SOURCES) {
+    try {
+      const price = await fetchOne(src);
+      livePrice = price;
+      applyFilPrice(price);
+      statusEl.innerHTML = '<span style="color:#1D9E75;">&#9679;</span> Live: $' + price.toFixed(2) +
+        ' &middot; ' + src.name + ', ' + new Date().toLocaleDateString() +
+        ' &middot; drag the slider to test lower or higher prices &middot; ' +
+        '<a href="#" id="resetFil" style="color:#378ADD;">reset to live</a>';
+      wireResetLink();
+      return;
+    } catch (e) { /* try the next source */ }
+  }
+  // All sources failed (offline, CORS, or rate-limited): fall back to default
+  applyFilPrice(DEFAULT_FIL_PRICE);
+  statusEl.innerHTML = '<span style="color:#D85A30;">&#9679;</span> Couldn’t reach a live price source &mdash; using $' +
+    DEFAULT_FIL_PRICE.toFixed(2) + ' default. Adjust the slider manually.';
+}
+
+// Toggle the β parameter controls + formula to match the selected escalation shape
+function applyBetaShape() {
+  const isExp = el('betaShape').value === 'exp';
+  el('powerParams').style.display = isExp ? 'none' : '';
+  el('expParams').style.display = isExp ? '' : 'none';
+  el('betaFormula').innerHTML = isExp
+    ? '&beta; = &beta;<sub>start</sub> &times; r<sup>(w1 &minus; 10)/5</sup> &nbsp;&mdash;&nbsp; each 5pp step multiplies &beta; by r'
+    : '&beta; = &beta;<sub>start</sub> + (&beta;<sub>max</sub> &minus; &beta;<sub>start</sub>) &times; ((w1 &minus; w1<sub>start</sub>) / (w1<sub>max</sub> &minus; w1<sub>start</sub>))<sup>k</sup>';
+  updateAll();
+}
+
+initCharts();
+el('revMode').dispatchEvent(new Event('change')); // apply default (custom) mode UI state
+applyBetaShape();                                 // apply default β shape (power-law) + formula, then render
+['revNowLog','revGrowth','growthFloor','filPrice','kParam','betaStart','betaMax','betaRatio'].forEach(id => el(id).addEventListener('input', updateAll));
+el('betaShape').addEventListener('change', applyBetaShape);
+document.querySelectorAll('.cg-input').forEach(inp => inp.addEventListener('input', updateAll));
+fetchFilPrice();
+</script>
+
+<footer style="margin-top: 2rem; padding: 1rem 0; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: var(--text2);">
+  Subnet-weight framing &mdash; w0 = 1&minus;&alpha;, w1 = &alpha;<sub>floor</sub>, wb = 1 &minus; &sum;<sub>i</sub> w<sub>i</sub>. Last updated: 2026-06-17
+</footer>
+</body>
+</html>
