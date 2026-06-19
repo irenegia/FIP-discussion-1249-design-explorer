@@ -53,15 +53,15 @@
     <span class="principle-tag w0">w0</span> <strong>Consensus weight (w0)</strong>
     <div style="margin:0.25rem 0 0 2.5rem;">
       &bull; The existing consensus network will receive <code>w0 &times; BR</code> each epoch &mdash; paid to the winning miner exactly as today.<br>
-      &bull; Follows a policy trajectory: starts at <strong>95%</strong> and ramps down continuously to <strong>~50%</strong> over 9 quarters (~5&nbsp;pp / quarter). Deterministic and time-based &mdash; no revenue gate.
+      &bull; Follows a policy trajectory: starts at <strong>95%</strong> and ramps down continuously to <strong>~50%</strong> over 9 quarters (~5&nbsp;pp / quarter). Deterministic and time-based &mdash; no volume gate.
     </div>
   </div>
 
   <div style="margin-top:0.75rem;">
     <span class="principle-tag w1">w1</span> <strong>Service-subnet weight</strong> (w1)
     <div style="margin:0.25rem 0 0 2.5rem;">
-      &bull; A new incentive stream for storage providers delivering a service. It receives <code>w1 &times; BR</code>, split among orchestrators by their verifiable revenue.<br>
-      &bull; Revenue-gated. Starts at 10% after Q1 (bootstrap quarter, ungated). From Q2 onward, steps up by 5&nbsp;pp per quarter if on-chain deal revenue clears the target; otherwise holds.
+      &bull; A new incentive stream for storage providers delivering a service. It receives <code>w1 &times; BR</code>, split among orchestrators by their verifiable volume.<br>
+      &bull; Volume-gated. Starts at 10% after Q1 (bootstrap quarter, ungated). From Q2 onward, steps up by 5&nbsp;pp per quarter if on-chain Filecoin Pay volume clears the target; otherwise holds.
     </div>
   </div>
 
@@ -79,16 +79,16 @@
   </div>
 
   <div style="margin-top:0.75rem;">
-    <strong>Revenue gate</strong> (drives w1)<br>
+    <strong>Volume gate</strong> (drives w1)<br>
     <code class="eq">
-    MeasuredDealRevenue(Q) &ge; &beta; &times; ServiceAlloc(Q&minus;1) &nbsp;|&nbsp; pass &rarr; w1 += step_size, else hold
+    MeasuredVol(Q) &ge; &beta; &times; ServiceAlloc(Q&minus;1) &nbsp;|&nbsp; pass &rarr; w1 += step_size, else hold
     </code>
   </div>
 
   <div style="margin-top:0.75rem;">
     <span class="principle-tag pbeta">&beta;</span> <strong>Beta</strong> (target multiplier)
     <div style="margin:0.25rem 0 0 2.5rem;">
-      &bull; Sets how much deal revenue must exceed last quarter&rsquo;s service allocation to unlock the next w1 step. Starts low (&beta;<sub>start</sub>) and escalates toward &beta;<sub>max</sub> as w1 grows, making later steps progressively harder to clear.
+      &bull; Sets how much Filecoin Pay volume must exceed last quarter&rsquo;s service allocation to unlock the next w1 step. Starts low (&beta;<sub>start</sub>) and escalates toward &beta;<sub>max</sub> as w1 grows, making later steps progressively harder to clear.
     </div>
   </div>
 
@@ -100,7 +100,7 @@
 <!-- ── How to use ── -->
 <div class="principles-box" style="background: var(--bg); border: 1px solid var(--border);">
   <strong>How to use this explorer</strong><br>
-  <strong>Step 1:</strong> Choose a revenue growth model below. Deal revenue = total $ value of paid storage deals (not the 0.5% network fee). Adjust the starting revenue, growth rate, and FIL price to match your assumptions.<br>
+  <strong>Step 1:</strong> Choose a volume growth model below. Filecoin Pay Volume in a quarter (FPV(Q)) = settled volume, that is "sum of all deal payments settled through Filecoin Pay during quarter Q" (not the 0.5% network fee). Adjust the starting volume, growth rate, and FIL price to match your assumptions.<br>
   <strong>Step 2:</strong> Pick the escalation shape (power-law or exponential) and tune the gate parameters (&beta; start, plus k / &beta; max, or the per-step ratio) to see how they affect the w1 progression and burn. The w0 trajectory (95% &rarr; 50% over 9Q) and the w1 step size (5 pp) are fixed.<br>
   <strong>Step 3:</strong> Check the simulated outputs below &mdash; the quarterly scenario table and charts update live as you move the sliders.
 </div>
@@ -108,7 +108,7 @@
 <!-- ── BR overestimate warning ── -->
 <div style="margin-top: 0.75rem; padding: 0.7rem 1rem; background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; font-size: 12.5px; color: #5d4037;">
   <strong style="color:#e65100;">&#9888; Block-reward overestimate:</strong>
-  This model applies simple-minting decay (6-year half-life) to the <em>entire</em> block reward. In reality, ~14% of current emission comes from baseline minting, which decays much faster when QAP declines (currently &minus;30&nbsp;PiB/day). Result: <strong>the model overestimates BR<sub>q</sub> by roughly +1% in Q1, growing to ~+14.5% by Q16</strong> (average &asymp; +9% over 16&nbsp;quarters). This makes the revenue gate <em>harder</em> to clear than it would be in practice &mdash; a conservative/pessimistic bias. Keep this in mind when interpreting near-pass or near-fail scenarios in later quarters.
+  This model applies simple-minting decay (6-year half-life) to the <em>entire</em> block reward. In reality, ~14% of current emission comes from baseline minting, which decays much faster when QAP declines (currently &minus;30&nbsp;PiB/day). Result: <strong>the model overestimates BR<sub>q</sub> by roughly +1% in Q1, growing to ~+14.5% by Q16</strong> (average &asymp; +9% over 16&nbsp;quarters). This makes the volume gate <em>harder</em> to clear than it would be in practice &mdash; a conservative/pessimistic bias. Keep this in mind when interpreting near-pass or near-fail scenarios in later quarters.
 </div>
 
 <!-- ── Inputs box (Steps 1 & 2) ── -->
@@ -121,7 +121,7 @@
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
 <div>
 <div class="ctrl-row">
-  <span class="ctrl-label">Revenue growth model</span>
+  <span class="ctrl-label">Volume growth model</span>
   <select id="revMode" style="font-size:13px; padding:3px 6px; border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text); cursor:pointer;">
     <option value="decel">Decaying growth</option>
     <option value="scurve">Peak-and-settle</option>
@@ -131,7 +131,7 @@
   <span class="ctrl-val" id="revMode-out" style="min-width:auto; font-weight:400; color:var(--text2); font-size:12px;">starts at slider, peaks ~Q4, settles to long-term rate</span>
 </div>
 <div class="ctrl-row">
-  <span class="ctrl-label">Expected deal revenue in Q2</span>
+  <span class="ctrl-label">Expected FPV(Q2)</span>
   <input type="range" min="0" max="1" value="0.466" step="0.005" id="revNowLog" />
   <span class="ctrl-val" id="revNow-out">$25.0K</span>
 </div>
@@ -179,14 +179,14 @@
 
 <details style="font-size:13px; color:var(--text2); margin:0 0 0.5rem;">
 <summary style="cursor:pointer; font-weight:500; color:var(--text2);">How these models work &darr;</summary>
-<p style="margin:0.5rem 0 0.25rem;"><b>Expected deal revenue in Q2</b> (R<sub>Q2</sub>) is the first measured quarter &mdash; total $ value of paid storage deals on-chain (Q1 is the bootstrap quarter with no revenue measurement). <b>Growth rate</b> (g) compounds from Q2 forward using one of these models:</p>
+<p style="margin:0.5rem 0 0.25rem;"><b>Expected FPV(Q2)</b> (R<sub>Q2</sub>) is the first measured quarter &mdash; total $ value of paid storage deals on-chain (Q1 is the bootstrap quarter with no volume measurement). <b>Growth rate</b> (g) compounds from Q2 forward using one of these models:</p>
 <p style="margin:0.25rem 0 0;"><b>Decaying growth:</b> <code>R(i) = R(i&minus;1) &times; (1 + g<sub>i</sub>)</code> where <code>g<sub>i</sub> = floor + (g &minus; floor) &times; e<sup>&minus;0.45(i&minus;1)</sup></code><br>
 <span style="color:var(--text2);">Growth rate starts at g (slider value) in Q2, decays exponentially toward the long-term rate steady state.</span></p>
 <p style="margin:0.25rem 0 0;"><b>Peak-and-settle:</b> <code>R(i) = R(i&minus;1) &times; (1 + g<sub>i</sub>)</code>, gamma-shaped growth rate normalised so g<sub>1</sub> = g (slider value)<br>
-<span style="color:var(--text2);">Starts at g, ramps up over 2&ndash;3 quarters (peak ~Q4), then steep decay to floor by ~Q13. As revenue gets large, growth rate drops fast.</span></p>
-<p style="margin:0.25rem 0 0;"><b>Custom (per-quarter):</b> You set the QoQ growth rate individually for each quarter from Q3 to Q16. The Q2 starting revenue slider sets R<sub>Q2</sub>; after that, each quarter compounds at the rate you type in. Growth rate and long-term rate sliders are replaced by the per-quarter inputs.</p>
+<span style="color:var(--text2);">Starts at g, ramps up over 2&ndash;3 quarters (peak ~Q4), then steep decay to floor by ~Q13. As volume gets large, growth rate drops fast.</span></p>
+<p style="margin:0.25rem 0 0;"><b>Custom (per-quarter):</b> You set the QoQ growth rate individually for each quarter from Q3 to Q16. The Q2 starting FPV slider sets R<sub>Q2</sub>; after that, each quarter compounds at the rate you type in. Growth rate and long-term rate sliders are replaced by the per-quarter inputs.</p>
 <p style="margin:0.25rem 0 0;"><b>Wasabi benchmark:</b> Implied QoQ growth rates derived from Wasabi Technologies (cloud storage, founded 2017). Verified annual revenue: $18M&rarr;$54M&rarr;$92.5M&rarr;$134.7M&rarr;$160.1M (2020&ndash;2024). Sources: getlatka.com, blocksandfiles.com, wasabi.com press releases.<br>
-<span style="color:var(--text2);">Each year&rsquo;s QoQ = (end/start)<sup>1/4</sup>&minus;1, held constant across 4 quarters: 32%/q &rarr; 14%/q &rarr; 10%/q &rarr; 4%/q. Growth rate and long-term rate sliders are ignored. Starting deal revenue slider still sets R<sub>0</sub> (Wasabi&rsquo;s absolute $ figures don&rsquo;t apply to Filecoin &mdash; only the growth shape is borrowed).</span></p>
+<span style="color:var(--text2);">Each year&rsquo;s QoQ = (end/start)<sup>1/4</sup>&minus;1, held constant across 4 quarters: 32%/q &rarr; 14%/q &rarr; 10%/q &rarr; 4%/q. Growth rate and long-term rate sliders are ignored. Starting volume slider still sets R<sub>0</sub> (Wasabi&rsquo;s absolute $ figures don&rsquo;t apply to Filecoin &mdash; only the growth shape is borrowed).</span></p>
 <p style="margin:0.25rem 0 0;">Block reward: 63,727 FIL/day (Apr 2026, via Filfox) with 6-year half-life decay. BR<sub>q</sub> = start-of-quarter daily rate &times; 90 days &times; FIL price (~1.4% overestimate vs exact integration).</p>
 <p style="margin:0.25rem 0 0;"><b>Note:</b> This model only applies simple minting decay to BR<sub>q</sub>. It does not account for baseline minting, which depends on network QAP vs the baseline power function. Currently baseline contributes ~14% of daily emission because QAP is well below baseline. If QAP were to grow, baseline minting would increase BR<sub>q</sub> beyond what this model projects, raising the gate target.</p>
 </details>
@@ -543,7 +543,7 @@ function initCharts() {
 
 function buildMainTable(revs, qBRs, alphas, f) {
   const { alphaFloors, gates, passed, allocations, betas } = f;
-  let h = '<p class="note" style="margin-bottom:0.5rem;">Gate at end of each quarter checks: MeasuredDealRevenue(Q) &ge; DealRevTarget(Q) = &beta; &times; ServiceAlloc(Q&minus;1). Q1 is the bootstrap quarter &mdash; ungated, no revenue measured. Weights: w0 + w1 + wb = 100%.</p>';
+  let h = '<p class="note" style="margin-bottom:0.5rem;">Gate at end of each quarter checks: MeasuredVol(Q) &ge; DealRevTarget(Q) = &beta; &times; ServiceAlloc(Q&minus;1). Q1 is the bootstrap quarter &mdash; ungated, no volume measured. Weights: w0 + w1 + wb = 100%.</p>';
   h += '<table class="step-table"><tr><th>Quarter</th><th>DealRev(Q) <span style="font-weight:400;color:var(--text2)">sim.</span></th><th>ARR</th><th>Growth</th><th>DealRevTarget(Q)</th><th>ServiceAlloc(Q&minus;1)</th><th>Gate cleared?</th><th>w0 <span style="font-weight:400;color:var(--text2)">consensus</span></th><th>w1 <span style="font-weight:400;color:var(--text2)">service</span></th><th>wb <span style="font-weight:400;color:var(--text2)">burn</span></th><th>&beta;</th></tr>';
   for (let i = 0; i < TABLE_QUARTERS; i++) {
     const w0 = 100 - alphas[i];
