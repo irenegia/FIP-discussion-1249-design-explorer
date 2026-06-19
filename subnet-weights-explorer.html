@@ -50,7 +50,7 @@
   <strong style="font-size:14px;">How it works</strong>
 
   <div style="margin-top:0.75rem;">
-    <span class="principle-tag w0">w0</span> <strong>Consensus weight (w0)</strong>
+    <span class="principle-tag w0">w0</span> <strong>Consensus reward stream weight (w0)</strong>
     <div style="margin:0.25rem 0 0 2.5rem;">
       &bull; The existing consensus network will receive <code>w0 &times; BR</code> each epoch &mdash; paid to the winning miner exactly as today.<br>
       &bull; Follows a policy trajectory: starts at <strong>95%</strong> and ramps down continuously to <strong>~50%</strong> over 9 quarters (~5&nbsp;pp / quarter). Deterministic and time-based &mdash; no volume gate.
@@ -58,7 +58,7 @@
   </div>
 
   <div style="margin-top:0.75rem;">
-    <span class="principle-tag w1">w1</span> <strong>Service stream weight</strong> (w1)
+    <span class="principle-tag w1">w1</span> <strong>Service reward stream weight</strong> (w1)
     <div style="margin:0.25rem 0 0 2.5rem;">
       &bull; A new incentive stream for storage providers delivering a service. It receives <code>w1 &times; BR</code>, split among orchestrators by their verifiable volume.<br>
       &bull; Volume-gated. Starts at 10% after Q1 (bootstrap quarter, ungated). From Q2 onward, steps up by 5&nbsp;pp per quarter if on-chain Filecoin Pay volume clears the target; otherwise holds.
@@ -74,7 +74,7 @@
   <div>
     <strong>Per-epoch split</strong> &mdash; weights sum to 1<br>
     <code class="eq">
-    Consensus: w0 &times; BR &nbsp;|&nbsp; Service stream: w1 &times; BR &nbsp;|&nbsp; Burn: wb &times; BR &nbsp;&nbsp;(w0 + w1 + wb = 1)
+    Consensus stream: w0 &times; BR &nbsp;|&nbsp; Service stream: w1 &times; BR &nbsp;|&nbsp; Burn: wb &times; BR &nbsp;&nbsp;(w0 + w1 + wb = 1)
     </code>
   </div>
 
@@ -446,7 +446,7 @@ function calcAlphaFloor(revs, qBRs, alphas, aMax, bp) {
       alphaFloors.push(currentFloor);
       allocations.push(currentFloor / 100 * qBRs[i]);
     } else {
-      // Gate check at end of quarter: DealRevenue(Q) ≥ β × ServiceAlloc(Q-1)
+      // Gate check at end of quarter: MeasuredVol(Q) ≥ β × ServiceAlloc(Q-1)
       // β is evaluated at the pre-step w1 (currentFloor); on a clear, w1 then steps +5pp.
       const prevAlloc = allocations[i - 1];
       const beta = computeBeta(currentFloor, bp, aMax);
@@ -543,8 +543,8 @@ function initCharts() {
 
 function buildMainTable(revs, qBRs, alphas, f) {
   const { alphaFloors, gates, passed, allocations, betas } = f;
-  let h = '<p class="note" style="margin-bottom:0.5rem;">Gate at end of each quarter checks: MeasuredVol(Q) &ge; DealRevTarget(Q) = &beta; &times; ServiceAlloc(Q&minus;1). Q1 is the bootstrap quarter &mdash; ungated, no volume measured. Weights: w0 + w1 + wb = 100%.</p>';
-  h += '<table class="step-table"><tr><th>Quarter</th><th>DealRev(Q) <span style="font-weight:400;color:var(--text2)">sim.</span></th><th>ARR</th><th>Growth</th><th>DealRevTarget(Q)</th><th>ServiceAlloc(Q&minus;1)</th><th>Gate cleared?</th><th>w0 <span style="font-weight:400;color:var(--text2)">consensus</span></th><th>w1 <span style="font-weight:400;color:var(--text2)">service</span></th><th>wb <span style="font-weight:400;color:var(--text2)">burn</span></th><th>&beta;</th></tr>';
+  let h = '<p class="note" style="margin-bottom:0.5rem;">Gate at end of each quarter checks: MeasuredVol(Q) &ge; TargetVol(Q) = &beta; &times; ServiceAlloc(Q&minus;1). Q1 is the bootstrap quarter &mdash; ungated, no volume measured. Weights: w0 + w1 + wb = 100%.</p>';
+  h += '<table class="step-table"><tr><th>Quarter</th><th>MeasuredVol(Q) <span style="font-weight:400;color:var(--text2)">sim.</span></th><th>ARR</th><th>Growth</th><th>TargetVol(Q)</th><th>ServiceAlloc(Q&minus;1)</th><th>Gate cleared?</th><th>w0 <span style="font-weight:400;color:var(--text2)">consensus</span></th><th>w1 <span style="font-weight:400;color:var(--text2)">service</span></th><th>wb <span style="font-weight:400;color:var(--text2)">burn</span></th><th>&beta;</th></tr>';
   for (let i = 0; i < TABLE_QUARTERS; i++) {
     const w0 = 100 - alphas[i];
     const w1 = alphaFloors[i];
