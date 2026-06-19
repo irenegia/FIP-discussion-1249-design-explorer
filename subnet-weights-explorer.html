@@ -58,7 +58,7 @@
   </div>
 
   <div style="margin-top:0.75rem;">
-    <span class="principle-tag w1">w1</span> <strong>Service-subnet weight</strong> (w1)
+    <span class="principle-tag w1">w1</span> <strong>Service stream weight</strong> (w1)
     <div style="margin:0.25rem 0 0 2.5rem;">
       &bull; A new incentive stream for storage providers delivering a service. It receives <code>w1 &times; BR</code>, split among orchestrators by their verifiable volume.<br>
       &bull; Volume-gated. Starts at 10% after Q1 (bootstrap quarter, ungated). From Q2 onward, steps up by 5&nbsp;pp per quarter if on-chain Filecoin Pay volume clears the target; otherwise holds.
@@ -74,7 +74,7 @@
   <div>
     <strong>Per-epoch split</strong> &mdash; weights sum to 1<br>
     <code class="eq">
-    Consensus: w0 &times; BR &nbsp;|&nbsp; Service subnet: w1 &times; BR &nbsp;|&nbsp; Burn: wb &times; BR &nbsp;&nbsp;(w0 + w1 + wb = 1)
+    Consensus: w0 &times; BR &nbsp;|&nbsp; Service stream: w1 &times; BR &nbsp;|&nbsp; Burn: wb &times; BR &nbsp;&nbsp;(w0 + w1 + wb = 1)
     </code>
   </div>
 
@@ -252,10 +252,10 @@
 <div id="mainTable"></div>
 
 <h2 style="margin-top: 1.5rem;">Share leaving consensus (1&minus;w0 = w1 + wb)</h2>
-<p class="note" style="margin-bottom:0.25rem;">1&minus;w0 is the share diverted from consensus each epoch. It splits into w1 (allocated to the service subnet) and wb (burned). The remaining w0 stays with consensus and is not shown here.</p>
+<p class="note" style="margin-bottom:0.25rem;">1&minus;w0 is the share diverted from consensus each epoch. It splits into w1 (reserved for the service stream) and wb (burned). The remaining w0 stays with consensus and is not shown here.</p>
 <div class="legend-row">
   <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>1&minus;w0 &mdash; leaves consensus (= w1 + wb)</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>w1 &mdash; service subnet (gated)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>w1 &mdash; service stream (gated)</span>
   <span class="legend-item"><span class="legend-dot" style="background:#E44B4B;"></span>wb &mdash; burn</span>
 </div>
 <div class="chart-wrap"><canvas id="chartWeights"></canvas></div>
@@ -263,8 +263,8 @@
 <h2 style="margin-top: 1.5rem;">Quarterly flows ($M)</h2>
 <div class="legend-row">
   <span class="legend-item"><span class="legend-dot" style="background:#1a1a1a;"></span>Block reward (emission)</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>Consensus (w0 &times; BR<sub>q</sub>)</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>Service subnet (w1 &times; BR<sub>q</sub>)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>Consensus stream (w0 &times; BR<sub>q</sub>)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>Service stream (w1 &times; BR<sub>q</sub>)</span>
   <span class="legend-item"><span class="legend-dot" style="background:#E44B4B;"></span>Burn (wb &times; BR<sub>q</sub>)</span>
   <span class="legend-item"><span class="legend-dot" style="background:#8B5E00;"></span>Gate target (&beta; &times; ServiceAlloc<sub>Q&minus;1</sub>)</span>
 </div>
@@ -419,7 +419,7 @@ function calcAlphaRamp(aMax, alphaRampQ) {
   return alphas;
 }
 
-// w1 (= α_floor): gated service-subnet weight.
+// w1 (= α_floor): gated service stream weight.
 // Q1 is bootstrap (ungated): w1 = α(end of Q1). From Q2: step up 5pp if the gate clears.
 function calcAlphaFloor(revs, qBRs, alphas, aMax, bp) {
   const stepSize = STEP_SIZE;
@@ -621,8 +621,8 @@ function updateAll() {
   const gateTarget = f.gates.map((g, i) => (i === 0 || g === null) ? null : g);
   cEmission.data.datasets = [
     { label: 'Block reward', data: qBRs, borderColor: '#1a1a1a', borderWidth: 2.5, pointRadius: 0, fill: false },
-    { label: 'Consensus (w0×BR_q)', data: consensusDollars, borderColor: '#378ADD', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 },
-    { label: 'Service subnet (w1×BR_q)', data: f.allocations, borderColor: '#1D9E75', borderWidth: 2.5, pointRadius: 3, fill: false, tension: 0.3 },
+    { label: 'Consensus stream (w0×BR_q)', data: consensusDollars, borderColor: '#378ADD', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 },
+    { label: 'Service stream (w1×BR_q)', data: f.allocations, borderColor: '#1D9E75', borderWidth: 2.5, pointRadius: 3, fill: false, tension: 0.3 },
     { label: 'Burn (wb×BR_q)', data: burnDollars, borderColor: '#E44B4B', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 },
     { label: 'Gate target (β×ServiceAlloc_Q-1)', data: gateTarget, borderColor: '#8B5E00', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 }
   ];
@@ -728,7 +728,7 @@ fetchFilPrice();
 </script>
 
 <footer style="margin-top: 2rem; padding: 1rem 0; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: var(--text2);">
-  Subnet-weight framing &mdash; w0 = 1&minus;&alpha;, w1 = &alpha;<sub>floor</sub>, wb = 1 &minus; &sum;<sub>i</sub> w<sub>i</sub>. Last updated: 2026-06-17
+  Weight framing &mdash; w0 = 1&minus;&alpha;, w1 = &alpha;<sub>floor</sub>, wb = 1 &minus; &sum;<sub>i</sub> w<sub>i</sub>. Last updated: 2026-06-17
 </footer>
 </body>
 </html>
