@@ -8,7 +8,7 @@
   :root {
     --bg: #ffffff; --bg2: #f5f5f3; --text: #1a1a1a; --text2: #6b6b6b;
     --border: rgba(0,0,0,0.1); --blue: #378ADD; --orange: #D85A30;
-    --green: #1D9E75; --gray: #B4B2A9; --pass: #639922; --fail: #E24B4A;
+    --green: #1D9E75; --gray: #B4B2A9; --pass: #639922; --fail: #E44B4B;
     --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -61,7 +61,7 @@
     <span class="principle-tag w1">w1</span> <strong>Service reward stream weight</strong> (w1)
     <div style="margin:0.25rem 0 0 2.5rem;">
       &bull; A new incentive stream for storage providers delivering a service. It receives <code>w1 &times; BR</code>, split among orchestrators by their verifiable volume.<br>
-      &bull; Volume-gated. Starts at 10% after Q1 (bootstrap quarter, ungated). From Q2 onward, steps up by 5&nbsp;pp per quarter if on-chain Filecoin Pay volume clears the target; otherwise holds.
+      &bull; During Q1 (bootstrap quarter, ungated) <code>w1 = 1&minus;w0</code>, so nothing is burned and w1 reaches 10% by quarter end. From Q2 onward, w1 steps up by 5&nbsp;pp per quarter only when on-chain Filecoin Pay Volume (FPV) clears the target; otherwise it holds.
     </div>
   </div>
 
@@ -100,7 +100,7 @@
 <!-- ── How to use ── -->
 <div class="principles-box" style="background: var(--bg); border: 1px solid var(--border);">
   <strong>How to use this explorer</strong><br>
-  <strong>Step 1:</strong> Choose a volume growth model below. Filecoin Pay Volume in a quarter (FPV(Q)) = settled volume, that is "sum of all deal payments settled through Filecoin Pay during quarter Q" (not the 0.5% network fee). Adjust the starting volume, growth rate, and FIL price to match your assumptions.<br>
+  <strong>Step 1:</strong> Choose a volume growth model below. Filecoin Pay Volume in a quarter (FPV(Q)) = settled volume &mdash; the &ldquo;sum of all deal payments settled through Filecoin Pay during quarter Q&rdquo; (not the 0.5% network fee). Adjust the starting volume, growth rate, and FIL price to match your assumptions.<br>
   <strong>Step 2:</strong> Pick the escalation shape (power-law or exponential) and tune the gate parameters (&beta; start, plus k / &beta; max, or the per-step ratio) to see how they affect the w1 progression and burn. The w0 trajectory (95% &rarr; 50% over 9Q) and the w1 step size (5 pp) are fixed.<br>
   <strong>Step 3:</strong> Check the simulated outputs below &mdash; the quarterly scenario table and charts update live as you move the sliders.
 </div>
@@ -132,8 +132,8 @@
 </div>
 <div class="ctrl-row">
   <span class="ctrl-label">Expected FPV(Q2)</span>
-  <input type="range" min="0" max="1" value="0.466" step="0.005" id="revNowLog" />
-  <span class="ctrl-val" id="revNow-out">$25.0K</span>
+  <input type="range" min="0" max="1" value="0.1326" step="0.0001" id="revNowLog" />
+  <span class="ctrl-val" id="revNow-out">$2.5K</span>
 </div>
 <div class="ctrl-row">
   <span class="ctrl-label" id="revGrowthLabel">Growth rate Q2→Q3</span>
@@ -179,7 +179,7 @@
 
 <details style="font-size:13px; color:var(--text2); margin:0 0 0.5rem;">
 <summary style="cursor:pointer; font-weight:500; color:var(--text2);">How these models work &darr;</summary>
-<p style="margin:0.5rem 0 0.25rem;"><b>Expected FPV(Q2)</b> (R<sub>Q2</sub>) is the first measured quarter &mdash; total $ value of paid storage deals on-chain (Q1 is the bootstrap quarter with no volume measurement). <b>Growth rate</b> (g) compounds from Q2 forward using one of these models:</p>
+<p style="margin:0.5rem 0 0.25rem;"><b>Expected FPV(Q2)</b> (R<sub>Q2</sub>) is the first measured quarter &mdash; total $ value of deal payments settled through Filecoin Pay (Q1 is the bootstrap quarter with no volume measurement). <b>Growth rate</b> (g) compounds from Q2 forward using one of these models:</p>
 <p style="margin:0.25rem 0 0;"><b>Decaying growth:</b> <code>R(i) = R(i&minus;1) &times; (1 + g<sub>i</sub>)</code> where <code>g<sub>i</sub> = floor + (g &minus; floor) &times; e<sup>&minus;0.45(i&minus;1)</sup></code><br>
 <span style="color:var(--text2);">Growth rate starts at g (slider value) in Q2, decays exponentially toward the long-term rate steady state.</span></p>
 <p style="margin:0.25rem 0 0;"><b>Peak-and-settle:</b> <code>R(i) = R(i&minus;1) &times; (1 + g<sub>i</sub>)</code>, gamma-shaped growth rate normalised so g<sub>1</sub> = g (slider value)<br>
@@ -204,8 +204,8 @@
 <div class="ctrl-row">
   <span class="ctrl-label">Escalation shape</span>
   <select id="betaShape" style="font-size:13px; padding:3px 6px; border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text); cursor:pointer; flex:1;">
-    <option value="power" selected>Power-law (k)</option>
-    <option value="exp">Exponential (&times; per step)</option>
+    <option value="power">Power-law (k)</option>
+    <option value="exp" selected>Exponential (&times; per step)</option>
   </select>
   <span class="ctrl-val" style="min-width:auto;"></span>
 </div>
@@ -251,12 +251,12 @@
 <h2>Quarterly scenario</h2>
 <div id="mainTable"></div>
 
-<h2 style="margin-top: 1.5rem;">Share leaving consensus (1&minus;w0 = w1 + wb)</h2>
-<p class="note" style="margin-bottom:0.25rem;">1&minus;w0 is the share diverted from consensus each epoch. It splits into w1 (reserved for the service stream) and wb (burned). The remaining w0 stays with consensus and is not shown here.</p>
+<h2 style="margin-top: 1.5rem;">Service stream w1 against the 1&minus;w0 ceiling</h2>
+<p class="note" style="margin-bottom:0.25rem;">w0 is the consensus weight; it follows a governed ramp-down from 95% to 50%. Its complement 1&minus;w0 (blue) is the <em>ceiling</em> &mdash; the most the service stream can take. w1 steps up toward that ceiling when FPV clears the gate; the residual <code>wb = 1&minus;w0&minus;w1</code> is burned. The consensus share w0 itself is not drawn here.</p>
 <div class="legend-row">
-  <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>1&minus;w0 &mdash; leaves consensus (= w1 + wb)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#378ADD;"></span>1&minus;w0 &mdash; ceiling (w0 ramps 95%&rarr;50%)</span>
   <span class="legend-item"><span class="legend-dot" style="background:#1D9E75;"></span>w1 &mdash; service stream (gated)</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#E44B4B;"></span>wb &mdash; burn</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#E44B4B;"></span>wb &mdash; burn (residual 1&minus;w0&minus;w1)</span>
 </div>
 <div class="chart-wrap"><canvas id="chartWeights"></canvas></div>
 
@@ -287,7 +287,6 @@ const DAILY_BR_FIL = 63727;
 const HALF_LIFE_DAYS = 6 * 365.25;
 const DAYS_PER_Q = 90;
 const DECAY_PER_Q = Math.pow(0.5, DAYS_PER_Q / HALF_LIFE_DAYS);
-const EPOCHS_PER_Q = 90 * 2880; // 2880 epochs/day × 90 days
 
 // Hardcoded mechanism constants
 // α (= the budget that leaves consensus = 1 − w0) ramps from 5% to 50% over 9 quarters,
@@ -296,6 +295,7 @@ const ALPHA_CAP = 50;        // α cap: 50%  →  w0 floor = 50%
 const ALPHA_RAMP_Q = 9;      // ramp duration: 9 quarters
 const STEP_SIZE = 5;          // w1 (= α_floor) step size: 5 pp
 const W1_ENTRY = 10;          // entry service weight after Q1 bootstrap (%)
+const ALPHA_LAUNCH = 5;       // 1−w0 = w1 at ship launch t0 (w0 = 95%), before Q1 elapses
 
 // β escalation curve, evaluated at the pre-step w1. Two convex/back-loaded shapes:
 //  • power-law: flat near the bottom, steep toward the top (β_start, β_max, k)
@@ -305,7 +305,13 @@ function computeBeta(w1, bp, aMax) {
     const n = Math.max(0, (w1 - W1_ENTRY) / STEP_SIZE); // steps above the 10% entry
     return bp.betaStart * Math.pow(bp.ratio, n);
   }
-  const norm = w1 <= STEP_SIZE ? 0 : Math.min(1, (w1 - STEP_SIZE) / (aMax - STEP_SIZE));
+  // Anchor at the 10% entry (W1_ENTRY), same reference as the exponential branch,
+  // so β = β_start exactly at the first gated weight (w1 = 10%) for both shapes.
+  // Top anchor is the LAST gated weight (aMax − STEP_SIZE = 45%), not aMax itself:
+  // w1 = aMax is the capped state and is never used as a gate, so β_max now lands
+  // on the hardest real gate (the 45% → 50% step). β holds at β_max for w1 ≥ 45%.
+  const topW1 = aMax - STEP_SIZE;
+  const norm = w1 <= W1_ENTRY ? 0 : Math.min(1, (w1 - W1_ENTRY) / (topW1 - W1_ENTRY));
   return bp.betaStart + (bp.betaMax - bp.betaStart) * Math.pow(norm, bp.k);
 }
 
@@ -331,7 +337,7 @@ el('revMode').addEventListener('change', function() {
 const WASABI_QOQ = [0.32, 0.32, 0.32, 0.32, 0.14, 0.14, 0.14, 0.14, 0.10, 0.10, 0.10, 0.10, 0.04, 0.04, 0.04, 0.04];
 
 function generateRevenue(revQ2, revGrowth, mode, growthFloor) {
-  // revQ2 = expected deal revenue in Q2 (first measured quarter)
+  // revQ2 = expected FPV in Q2 (first measured quarter)
   // Q1 (bootstrap) has no measured revenue → revs[0] = 0
   const revs = [0]; // Q1: no revenue measured
   for (let i = 1; i < QUARTERS; i++) {
@@ -412,14 +418,16 @@ function calcAlphaRamp(aMax, alphaRampQ) {
   const ALPHA_START = 5;
   const alphas = [];
   for (let i = 0; i < QUARTERS; i++) {
-    const t = (i + 1) / alphaRampQ; // fraction of ramp completed at end of quarter i+1
+    // End-of-quarter ramp value. Launch (start of Q1) = 5% (w0 = 95%); by the end of Q1 it
+    // has ramped to 10% (w0 = 90%), reaching aMax (50%) by the end of Q9 — ~9 quarters, ~5pp/q.
+    const t = (i + 1) / alphaRampQ;
     const alpha = Math.min(aMax, ALPHA_START + (aMax - ALPHA_START) * Math.min(t, 1));
     alphas.push(alpha);
   }
   return alphas;
 }
 
-// w1 (= α_floor): gated service stream weight.
+// w1 (= α_floor): volume-gated service-stream weight.
 // Q1 is bootstrap (ungated): w1 = α(end of Q1). From Q2: step up 5pp if the gate clears.
 function calcAlphaFloor(revs, qBRs, alphas, aMax, bp) {
   const stepSize = STEP_SIZE;
@@ -473,8 +481,8 @@ const weightAreaLabelsPlugin = {
   id: 'weightAreaLabels',
   afterDraw(chart) {
     const ctx = chart.ctx;
-    const svc = chart.getDatasetMeta(0); // w1 (service) line / area top
-    const env = chart.getDatasetMeta(1); // 1−w0 envelope line
+    const env = chart.getDatasetMeta(0); // 1−w0 ceiling line
+    const svc = chart.getDatasetMeta(1); // w1 (service) line / area top
     if (!svc.data.length || !env.data.length) return;
 
     const mid = Math.floor(env.data.length / 2);
@@ -502,7 +510,7 @@ const weightChartOpts = {
   },
   plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: {
     label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%',
-    afterBody: items => { const ds = items[0].chart.data.datasets; const i = items[0].dataIndex; return 'wb (burn): ' + Math.max(0, ds[1].data[i] - ds[0].data[i]).toFixed(1) + '%'; }
+    afterBody: items => { const ds = items[0].chart.data.datasets; const i = items[0].dataIndex; return 'wb (burn): ' + Math.max(0, ds[0].data[i] - ds[1].data[i]).toFixed(1) + '%'; }
   } } }
 };
 
@@ -543,8 +551,8 @@ function initCharts() {
 
 function buildMainTable(revs, qBRs, alphas, f) {
   const { alphaFloors, gates, passed, allocations, betas } = f;
-  let h = '<p class="note" style="margin-bottom:0.5rem;">Gate at end of each quarter checks: MeasuredVol(Q) &ge; TargetVol(Q) = &beta; &times; ServiceAlloc(Q&minus;1). Q1 is the bootstrap quarter &mdash; ungated, no volume measured. Weights: w0 + w1 + wb = 100%.</p>';
-  h += '<table class="step-table"><tr><th>Quarter</th><th>MeasuredVol(Q) <span style="font-weight:400;color:var(--text2)">sim.</span></th><th>ARR</th><th>Growth</th><th>TargetVol(Q)</th><th>ServiceAlloc(Q&minus;1)</th><th>Gate cleared?</th><th>w0 <span style="font-weight:400;color:var(--text2)">consensus</span></th><th>w1 <span style="font-weight:400;color:var(--text2)">service</span></th><th>wb <span style="font-weight:400;color:var(--text2)">burn</span></th><th>&beta;</th></tr>';
+  let h = '<p class="note" style="margin-bottom:0.5rem;">Gate at end of each quarter checks: MeasuredVol(Q) &ge; VolTarget(Q) = &beta; &times; ServiceAlloc(Q&minus;1). Q1 is the bootstrap quarter &mdash; ungated, no volume measured. <strong>w0, w1 and wb are end-of-quarter weights.</strong></p>';
+  h += '<table class="step-table"><tr><th>Quarter</th><th>FPV(Q) <span style="font-weight:400;color:var(--text2)">sim.</span></th><th>ARR</th><th>Growth</th><th>FPV target(Q)</th><th>ServiceAlloc(Q&minus;1)</th><th>Gate cleared?</th><th>w0 <span style="font-weight:400;color:var(--text2)">consensus</span></th><th>w1 <span style="font-weight:400;color:var(--text2)">service</span></th><th>wb <span style="font-weight:400;color:var(--text2)">burn</span></th><th>&beta;</th></tr>';
   for (let i = 0; i < TABLE_QUARTERS; i++) {
     const w0 = 100 - alphas[i];
     const w1 = alphaFloors[i];
@@ -598,10 +606,17 @@ function updateAll() {
   const wbSeries = alphas.map((a, i) => Math.max(0, a - f.alphaFloors[i]));
   const oneMinusW0 = alphas.slice(); // 1−w0 = α = the share leaving consensus = w1 + wb
 
-  // Share leaving consensus: 1−w0 envelope, split into w1 (service, green) + wb (burn, red gap)
+  // Share leaving consensus: prepend the launch point t0 (when it ships), where
+  // 1−w0 = w1 = 5% (w0 = 95%, nothing burned); Q1 = end of the first quarter, etc.
+  const wChartW1  = [ALPHA_LAUNCH].concat(w1Series);
+  const wChartEnv = [ALPHA_LAUNCH].concat(oneMinusW0);
+  cWeights.data.labels = ['t0'].concat(qLabels);
+  // Layered to-origin fills (no fill-between-datasets, which breaks when one line is stepped
+  // and the other is straight). Ceiling = light-red area up to 1−w0 (drawn behind, straight line);
+  // w1 = green stepped area painted on top. The red strip left uncovered above w1 IS the burn.
   cWeights.data.datasets = [
-    { label:'w1 (service)', data:w1Series, borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,0.25)', borderWidth:2, pointRadius:0, order:2, fill:'origin', stepped:'after' },
-    { label:'1−w0 (leaves consensus)', data:oneMinusW0, borderColor:'#378ADD', backgroundColor:'rgba(228,75,75,0.2)', borderWidth:2.5, pointRadius:0, order:1, fill:'-1', tension:0.3 }
+    { label:'1−w0 (ceiling)', data:wChartEnv, borderColor:'#378ADD', backgroundColor:'rgba(228,75,75,0.16)', borderWidth:2.5, pointRadius:0, order:2, fill:'origin', stepped:'before' },
+    { label:'w1 (service)', data:wChartW1, borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,0.50)', borderWidth:2, pointRadius:0, order:1, fill:'origin', stepped:'before' }
   ];
   cWeights.options.scales.y.max = aMax + 5;
   cWeights.update('none');
@@ -615,34 +630,44 @@ function updateAll() {
 
   buildMainTable(revs, qBRs, alphas, f);
 
-  // Quarterly flows chart
+  // Quarterly flows chart — prepend the launch point t0 (w0 = 95%, w1 = 5%) on the launch
+  // block reward, so the x-axis aligns with the weight chart above.
   const consensusDollars = w0Series.map((w, i) => w / 100 * qBRs[i]);
   const burnDollars = wbSeries.map((w, i) => w / 100 * qBRs[i]);
   const gateTarget = f.gates.map((g, i) => (i === 0 || g === null) ? null : g);
+  const w0Launch = 100 - ALPHA_LAUNCH; // 95%
+  cEmission.data.labels = ['t0'].concat(qLabels);
   cEmission.data.datasets = [
-    { label: 'Block reward', data: qBRs, borderColor: '#1a1a1a', borderWidth: 2.5, pointRadius: 0, fill: false },
-    { label: 'Consensus stream (w0×BR_q)', data: consensusDollars, borderColor: '#378ADD', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 },
-    { label: 'Service stream (w1×BR_q)', data: f.allocations, borderColor: '#1D9E75', borderWidth: 2.5, pointRadius: 3, fill: false, tension: 0.3 },
-    { label: 'Burn (wb×BR_q)', data: burnDollars, borderColor: '#E44B4B', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 },
-    { label: 'Gate target (β×ServiceAlloc_Q-1)', data: gateTarget, borderColor: '#8B5E00', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 }
+    { label: 'Block reward', data: [qBRs[0]].concat(qBRs), borderColor: '#1a1a1a', borderWidth: 2.5, pointRadius: 0, fill: false },
+    { label: 'Consensus stream (w0×BR_q)', data: [w0Launch/100*qBRs[0]].concat(consensusDollars), borderColor: '#378ADD', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 },
+    { label: 'Service stream (w1×BR_q)', data: [ALPHA_LAUNCH/100*qBRs[0]].concat(f.allocations), borderColor: '#1D9E75', borderWidth: 2.5, pointRadius: 3, fill: false, tension: 0.3 },
+    { label: 'Burn (wb×BR_q)', data: [0].concat(burnDollars), borderColor: '#E44B4B', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 },
+    { label: 'Gate target (β×ServiceAlloc_Q-1)', data: [null].concat(gateTarget), borderColor: '#8B5E00', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.3 }
   ];
   cEmission.update('none');
 
-  // Target multiplier escalation curve (β as a function of w1 = service weight)
+  // Target multiplier escalation curve (β as a function of w1 = service weight).
+  // The curve is plotted only up to the LAST real gate (topW1 = aMax − STEP_SIZE = 45%):
+  // w1 = aMax (50%) is the capped state and is never gated, so the top value of the
+  // curve lands exactly on the last gate the mechanism actually evaluates.
+  const topW1 = aMax - STEP_SIZE;
   const STEPS = 50;
   const convexPts = [];
   let maxBeta = 0;
   for (let i = 0; i <= STEPS; i++) {
-    const af = (aMax / STEPS) * i;
+    const af = (topW1 / STEPS) * i;
     const y = computeBeta(af, bp, aMax);
     if (af >= W1_ENTRY && y > maxBeta) maxBeta = y;
     convexPts.push({ x: af, y });
   }
+  // Mark the last real gate (where β reaches its top value)
+  const lastGatePt = [{ x: topW1, y: computeBeta(topW1, bp, aMax) }];
   const shapeLabel = shape === 'exp' ? 'Exponential (×' + ratio.toFixed(2) + '/step)' : 'Power-law (k=' + k.toFixed(1) + ')';
   cBeta.data.datasets = [
-    { label: shapeLabel, data: convexPts, borderColor: '#8B5E00', borderWidth: 2.5, pointRadius: 0, fill: false }
+    { label: shapeLabel, data: convexPts, borderColor: '#8B5E00', borderWidth: 2.5, pointRadius: 0, fill: false },
+    { label: 'last gate (w1=' + topW1 + '%)', data: lastGatePt, borderColor: '#8B5E00', backgroundColor: '#8B5E00', pointRadius: 4, pointStyle: 'rectRot', showLine: false }
   ];
-  cBeta.options.scales.x.max = aMax;
+  cBeta.options.scales.x.max = topW1;
   cBeta.options.scales.y.max = Math.max(0.5, Math.ceil(maxBeta * 1.1 * 10) / 10);
   cBeta.update('none');
 }
@@ -728,7 +753,7 @@ fetchFilPrice();
 </script>
 
 <footer style="margin-top: 2rem; padding: 1rem 0; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: var(--text2);">
-  Weight framing &mdash; w0 = 1&minus;&alpha;, w1 = &alpha;<sub>floor</sub>, wb = 1 &minus; &sum;<sub>i</sub> w<sub>i</sub>. Last updated: 2026-06-17
+  Last updated: 2026-06-22
 </footer>
 </body>
 </html>
